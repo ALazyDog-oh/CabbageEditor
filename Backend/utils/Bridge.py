@@ -198,6 +198,7 @@ class Bridge(QObject):
     @pyqtSlot(str, str)
     def send_message_to_main(self, command_name, command_data):
         try:
+            print(command_name, command_data)
             self.command_to_main.emit(command_name, command_data)
         except Exception as e:
             print(f"send_message_to_main failed: {str(e)}")

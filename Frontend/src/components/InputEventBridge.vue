@@ -35,7 +35,7 @@ function isTypingTarget(target) {
 // 向 Python 端发送事件（通过 pyBridge）
 function sendToPython(commandName, payload) {
   try {
-    if (window.pyBridge && typeof window.pyBridge.send_message_to_main === 'function') {
+    if (window.pyBridge) {
       window.pyBridge.send_message_to_main(commandName, JSON.stringify(payload))
     }
   } catch (e) {
