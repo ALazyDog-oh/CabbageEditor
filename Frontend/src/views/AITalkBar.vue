@@ -158,21 +158,6 @@ const handleDockEvent = (eventType, eventData) => {
   }
 }
 
-const handleKeyDown = (event) => {
-  event.preventDefault();
-  switch(event.key.toLowerCase()) {
-    case 'escape':
-      openSetup();
-      break;
-  }
-};
-// 调用Esc
-const openSetup = () => {
-  if (window.pyBridge) {
-    window.pyBridge.addDockWidget("SetUp", "/SetUp", "float", "center");
-  }
-}
-
 onMounted(() => {
   document.addEventListener('mousemove', handleResizeMove);
   document.addEventListener('mouseup', handleResizeUp);
@@ -181,7 +166,6 @@ onMounted(() => {
   document.addEventListener('mousemove', onResize);
   document.addEventListener('mouseup', stopResize);
   window.pyBridge.dock_event.connect(handleDockEvent);
-  document.addEventListener('keydown', handleKeyDown);
 });
 
 onUnmounted(() => {
@@ -192,6 +176,5 @@ onUnmounted(() => {
   document.removeEventListener('mousemove', onResize);
   document.removeEventListener('mouseup', stopResize);
   window.pyBridge.dock_event.disconnect(handleDockEvent);
-  document.removeEventListener('keydown', handleKeyDown);
 });
 </script>

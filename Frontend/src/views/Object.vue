@@ -431,20 +431,7 @@ const handleResizeUp = () => {
   if (dragState.value.isResizing) stopResize();
 };
 
-const handleKeyDown = (event) => {
-  event.preventDefault();
-  switch(event.key.toLowerCase()) {
-    case 'escape':
-      openSetup();
-      break;
-  }
-};
-// 调用Esc
-const openSetup = () => {
-  if (window.pyBridge) {
-    window.pyBridge.addDockWidget("SetUp", "/SetUp", "float", "center");
-  }
-}
+// 全局 ESC 已在 InputEventBridge 中处理，这里不再重复监听，避免阻止输入行为
 
 const exportCode = () => {
   try {
@@ -482,7 +469,7 @@ onMounted(() => {
   document.addEventListener('mouseup', handleResizeUp);
   document.addEventListener('mousemove', onDrag);
   document.addEventListener('mouseup', stopDrag);
-  document.addEventListener('keydown', handleKeyDown);
+  // 不再添加 keydown 监听，交由全局 InputEventBridge 统一处理 ESC
 });
 
 // 组件卸载时清理
@@ -493,7 +480,7 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', handleResizeUp);
   document.removeEventListener('mousemove', onDrag);
   document.removeEventListener('mouseup', stopDrag);
-  document.removeEventListener('keydown', handleKeyDown);
+  // 不再移除 keydown 监听（未添加）
 });
 </script>
 

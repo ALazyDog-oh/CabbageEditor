@@ -6,10 +6,10 @@ class FileHandler:
     def __init__(self):
         super().__init__()
 
-    def open_file(self, caption="打开文件", filter="所有文件 (*.*)", default_dir=None):
+    def open_file(self, caption="打开文件", file="所有文件 (*.*)", default_dir=None):
         if default_dir is None:
             default_dir = os.getcwd()
-        file_path, _ = QFileDialog.getOpenFileName(None, caption, default_dir, filter)
+        file_path, _ = QFileDialog.getOpenFileName(None, caption, default_dir, file)
         if file_path:
             try:
                 with open(file_path, 'r', encoding='utf-8') as file:
@@ -26,11 +26,11 @@ class FileHandler:
                 print(f"读取文件失败: {str(e)}")
         return None, None
 
-    def save_file(self, content, caption="保存文件", filter="所有文件 (*.*)", default_dir=None, default_filename=""):
+    def save_file(self, content, caption="保存文件", file="所有文件 (*.*)", default_dir=None, default_filename=""):
         if default_dir is None:
             default_dir = os.getcwd()
         file_path, _ = QFileDialog.getSaveFileName(
-            None, caption, os.path.join(default_dir, default_filename), filter
+            None, caption, os.path.join(default_dir, default_filename), file
         )
         if file_path:
             try:

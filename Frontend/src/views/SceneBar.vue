@@ -237,21 +237,6 @@ const handleResizeUp = () => {
   if (dragState.value.isResizing) stopResize();
 };
 
-const handleKeyDown = (event) => {
-  event.preventDefault();
-  switch(event.key.toLowerCase()) {
-    case 'escape':
-      openSetup();
-      break;
-  }
-};
-// 调用Esc
-const openSetup = () => {
-  if (window.pyBridge) {
-    window.pyBridge.addDockWidget("SetUp", "/SetUp", "float", "center");
-  }
-}
-
 onMounted(() => {
   currentSceneName.value = route.query.sceneName || 'scene1';
   document.addEventListener('mousemove', handleResizeMove);
@@ -262,7 +247,6 @@ onMounted(() => {
   if (window.pyBridge) {
     window.pyBridge.dock_event.connect(handleDockEvent);
   };
-  document.addEventListener('keydown', handleKeyDown);
 });
 
 onUnmounted(() => {
@@ -273,6 +257,5 @@ onUnmounted(() => {
   if (window.pyBridge) {
     window.pyBridge.dockEvent.disconnect(handleDockEvent);
   };
-  document.removeEventListener('keydown', handleKeyDown);
 });
 </script>

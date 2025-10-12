@@ -5,6 +5,7 @@ from PyQt6.QtGui import QColor, QGuiApplication
 from utils.CentralManager import CentralManager
 from utils.Bridge import Bridge
 from ui.DockWidget import AddDock, RemoveDock
+import json
 
 class BrowserWidget(QWebEngineView):
     def __init__(self, Main_Window, url:str):
@@ -104,3 +105,19 @@ class BrowserWidget(QWebEngineView):
         if command_name == "go_home":
             self.load(self.url)
             print(self.url)
+            return
+
+        if command_name == "input_event":
+            try:
+                data = json.loads(command_data) if isinstance(command_data, str) else command_data
+                # Minimal verification/logging; extend as needed to route to engine
+                kind = data.get("kind")
+                etype = data.get("type")
+                scene = data.get("sceneName")
+                print(f"[INPUT] {kind}/{etype} scene={scene} data={data}")
+            except Exception as e:
+                print(f"[INPUT] Failed to parse input_event: {e} -> raw={command_data}")
+            return
+
+        # Fallback: log unknown command
+        print(f"[Bridge] Unknown command: {command_name} data={command_data}")
