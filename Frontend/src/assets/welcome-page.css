@@ -1,4 +1,4 @@
-.theme-fun .welcome-container {
+.welcome-container {
   min-height: 100vh;
   /* 背景图片URL */
   background-image: url('');
@@ -6,7 +6,7 @@
   background-position: center;
 }
 
-.theme-fun .welcome-logo {
+.welcome-logo {
   position: fixed;
   top: 0;
   left: 0;
@@ -16,7 +16,7 @@
   transform: translateY(-1.5rem);
 }
 
-.theme-fun .welcome-logo-img {
+.welcome-logo-img {
   /* LOGO图片URL */
   content: url('');
   width: 62%;
@@ -30,7 +30,7 @@
   /* animation: float 3s ease-in-out infinite; */
 }
 
-.theme-fun .announcement-container {
+.announcement-container {
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
@@ -40,7 +40,7 @@
   z-index: 51;
 }
 
-.theme-fun .announcement-button {
+.announcement-button {
   
   position:absolute;
   right: 2rem;
@@ -52,23 +52,23 @@
   z-index: 51;
 }
 
-.theme-fun .announcement-button:hover {
+.announcement-button:hover {
   color: rgba(0, 0, 0, 0.652);
   background-color: rgba(0, 0, 0, 0.05);
   transform: rotate(360deg); /* 旋转360度 */
 }
 
-.theme-fun .announcement-button-img {
+.announcement-button-img {
   width: 3.5rem;
   height: 3.5rem;
   object-fit: contain;
 }
-.theme-fun .announcement-button-img:hover {
+.announcement-button-img:hover {
   transform: rotate(360deg); /* 旋转360度 */
 }
 
 
-.theme-fun .announcement-panel {
+.announcement-panel {
   position: fixed;
   top: 5rem;
   right: 5rem;
@@ -83,12 +83,12 @@
   transform: translateY(1rem) scale(0.95);
 }
 
-.theme-fun .announcement-panel.active {
+.announcement-panel.active {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
 
-.theme-fun .button-container {
+.button-container {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -103,24 +103,24 @@
 }
 
 @media (min-width: 640px) {
-  .theme-fun .button-container {
+  .button-container {
     width: 75%;
   }
 }
 
 @media (min-width: 768px) {
-  .theme-fun .button-container {
+  .button-container {
     width: 50%;
   }
 }
 
 @media (min-width: 1024px) {
-  .theme-fun .button-container {
+  .button-container {
     width: 33.333333%;
   }
 }
 
-.theme-fun .welcome-button {
+.welcome-button {
   width: 400px;
   height: 100px;
   border-radius: 0.5rem;
@@ -136,14 +136,14 @@
   left: -98px;   /* 相对于原位置向右移动（负值向左） */
 }
 
-.theme-fun .welcome-button:hover {
+.welcome-button:hover {
   background-color: rgba(21, 136, 213, 0.24);
   transform: scale(1.05);
   padding: 1.2rem 3rem;
   width: 128%;
 }
 
-.theme-fun .button-text {
+.button-text {
   font-family: "Comic Sans MS", "Marker Felt", "Arial Rounded MT Bold", sans-serif;
   color: rgba(6, 30, 16, 0.8);
   letter-spacing: 0.05em;
@@ -154,14 +154,14 @@
 }
 
 @media (min-width: 640px) {
-  .theme-fun .button-text {
+  .button-text {
     font-size: 1rem;
     line-height: 1.5rem;
   }
 }
 
 @media (min-width: 768px) {
-  .theme-fun .button-text {
+  .button-text {
     font-size: 1.125rem;
     line-height: 1.75rem;
   }

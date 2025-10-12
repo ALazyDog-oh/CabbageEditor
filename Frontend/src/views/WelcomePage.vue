@@ -1,5 +1,5 @@
 <template>
-<div :class="themeClass">
+<div>
   <div tabindex="0" @keydown="handleKeyDown">
     <div class="welcome-container">
       <!-- LOGO -->
@@ -120,9 +120,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, onUnmounted, computed, provide } from 'vue';
+import { ref, onMounted, onBeforeUnmount, onUnmounted, provide } from 'vue';
 import '@/assets/welcome-page.css'
-import '@/assets/welcome-pagePE.css'
 import { useRouter } from 'vue-router';
 import eventBus from '@/utils/eventBus';
 
@@ -135,14 +134,7 @@ const isJumping = ref(false);
 const jumpSpeed = ref(0);
 const gravity = 0.01;
 const router = useRouter();
-const selectedVersion = ref('fun');
 const saves = ref([])
-
-const themeClass = computed(() => {
-  const cls = selectedVersion.value === 'pro' ? 'theme-pro' : 'theme-fun'
-  console.log('Current theme class:', cls)
-  return cls
-})
 
 const toggleAnnouncements = () => {
   showAnnouncements.value = !showAnnouncements.value;
@@ -356,18 +348,6 @@ const loadSave = (save) => {
 }
 
 onMounted(() => {
-  try {
-    const savedVersion = localStorage?.getItem('selectedVersion')
-    if (savedVersion) {
-      selectedVersion.value = savedVersion
-    } else {
-      selectedVersion.value = 'fun'
-    }
-  } catch (e) {
-    console.warn('localStorage access error:', e)
-    selectedVersion.value = 'fun'
-  }
-
   document.addEventListener('keydown', handleKeyDown);
   eventBus.on('version-selected', handleVersionSelect);
   loadArchives();
@@ -375,9 +355,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  eventBus.off('version-selected', handleVersionSelect)
   document.removeEventListener('keydown', handleKeyDown)
-  eventBus.off('version-selected', handleVersionSelect)
   document.removeEventListener('keydown', handleKeyDown)
 })
 </script>
