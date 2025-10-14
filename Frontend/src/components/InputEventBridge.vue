@@ -46,7 +46,6 @@ function sendToPython(commandName, payload) {
 // 基础事件字段（时间戳、修饰键、场景名等）
 function baseEventFields(e) {
   return {
-    ts: Date.now(), // 时间戳
     // 键盘修饰键
     altKey: !!e.altKey,
     ctrlKey: !!e.ctrlKey,

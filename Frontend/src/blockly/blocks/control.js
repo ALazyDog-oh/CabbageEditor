@@ -139,9 +139,10 @@ export const defineControlBlocks = (actorname) => {
     Blockly.Blocks['control_cloneStart'] = {
         init: function () {
             this.appendDummyInput()
-                .appendField('当作为克隆体启动时')
+                .appendField('当作为克隆体启动时');
             this.setInputsInline(true);
-            this.setPreviousStatement(flash, null);
+            // 事件起始块：无上接点，有下接点
+            this.setPreviousStatement(false, null);
             this.setNextStatement(true, null);
             this.setColour('#FFDE59');
             this.setHelpUrl('');
@@ -152,7 +153,7 @@ export const defineControlBlocks = (actorname) => {
         init: function () {
             this.appendDummyInput()
                 .appendField('克隆')
-                .appendField(new Blockly.FieldTextInput(actorname.value), 'x')
+                .appendField(new Blockly.FieldTextInput(actorname.value), 'x');
             this.setInputsInline(true);
             this.setPreviousStatement(true, null);
             this.setNextStatement(true, null);
@@ -164,10 +165,11 @@ export const defineControlBlocks = (actorname) => {
     Blockly.Blocks['control_cloneDEL'] = {
         init: function () {
             this.appendDummyInput()
-                .appendField('删除此克隆体')
+                .appendField('删除此克隆体');
             this.setInputsInline(true);
+            // 终止块：有上接点，无下接点
             this.setPreviousStatement(true, null);
-            this.setNextStatement(flash, null);
+            this.setNextStatement(false, null);
             this.setColour('#FE9900');
             this.setHelpUrl('');
         }

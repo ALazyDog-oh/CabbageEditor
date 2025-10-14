@@ -1,6 +1,7 @@
 import os
-import json
+
 from PyQt6.QtWidgets import QFileDialog
+
 
 class FileHandler:
     def __init__(self):

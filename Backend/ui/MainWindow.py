@@ -1,13 +1,15 @@
+import os
+import sys
+
 from PyQt6.QtCore import Qt, QPoint, QEvent
-from PyQt6.QtWidgets import QMainWindow, QApplication
-from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEngineSettings
-from utils.Bridge import Bridge
-import os, sys
-from utils.StaticComponents import scene_dict, url
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWidgets import QMainWindow, QApplication, QDockWidget
+from ui.BrowserWidget import BrowserWidget
 from ui.CustomWindow import CustomWindow
 from ui.RenderWidget import RenderWidget
-from ui.BrowserWidget import BrowserWidget
+from utils.StaticComponents import scene_dict, url
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -51,11 +53,8 @@ class MainWindow(QMainWindow):
         super().moveEvent(event)
 
     def reloadWidget(self) -> None:
-        central_widget = self.centralWidget()
-        if central_widget:
-            central_widget.setParent(None)
-
-        for dock in self.findChildren(Bridge.QDockWidget):
+        # 保持渲染窗口为主窗口中心部件，仅重建 OSD 的 BrowserWidget
+        for dock in self.findChildren(QDockWidget):
             dock.setParent(None)
 
         for child in self.children():
@@ -64,9 +63,9 @@ class MainWindow(QMainWindow):
 
         if self.BrowserWidget:
             self.BrowserWidget.setParent(None)
-        self.BrowserWidget.url().clear()
-        self.BrowserWidget = Bridge.BrowserWidget(self)
-        self.setCentralWidget(self.BrowserWidget)
+        # 重新创建并挂载到 OSD 窗口
+        self.BrowserWidget = BrowserWidget(self.osd, url)
+        self.osd.setCentralWidget(self.BrowserWidget)
 
     def closeEvent(self, event) -> None:
         QApplication.instance().quit()
@@ -81,6 +80,13 @@ class MainWindow(QMainWindow):
         profile = QWebEngineProfile.defaultProfile()
         settings = profile.settings()
         settings.setAttribute(QWebEngineSettings.WebAttribute.ShowScrollBars, False)
+        # Reduce cache/cookies persistence to mitigate memory accumulation
+        try:
+            profile.setHttpCacheType(QWebEngineProfile.HttpCacheType.MemoryHttpCache)
+            profile.setHttpCacheMaximumSize(0)
+            profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.NoPersistentCookies)
+        except Exception:
+            pass
 
 app = QApplication(sys.argv)
 window = MainWindow()

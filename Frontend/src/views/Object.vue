@@ -252,8 +252,7 @@ const loadWorkspaceFromFile = async () => {
       console.error('无效的工作区数据格式');
       return false;
     }
-    
-    // 清空当前工作区
+
     workspace.value.clear();
     
     Blockly.serialization.workspaces.load(workspaceData, workspace.value);
@@ -268,100 +267,138 @@ const loadWorkspaceFromFile = async () => {
 };
 
 
-// 初始化 Blockly
+
 const initBlockly = () => {
-  const blocklyDiv = document.getElementById('blockdiv');
-  if (!blocklyDiv) {
-    console.error('Blockly 容器未找到');
-    return;
-  }
-
-  // 设置语言
-  Blockly.setLocale(CN);
-  initBlocklyAndGenerators();
-
-  // 创建工作区
-  workspace.value = Blockly.inject(blocklyDiv, WORKSPACE_CONFIG);
-
-  Blockly.ContextMenuRegistry.registry.register({
-    displayText: '保存工作区',
-    preconditionFn: (scope) => {
-      return workspace.value && workspace.value.getAllBlocks(false).length > 0 ? 'enabled' : 'disabled';
-    },
-    callback: async () => {
-      const workspaceData = Blockly.serialization.workspaces.save(workspace.value);
-      const success = await saveWorkspaceToFile(workspaceData);
-      if (success) {
-        console.log('工作区已保存到文件');
-      }
-    },
-    scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
-    id: 'saveWorkspace',
-    weight: 1
-  });
-  Blockly.ContextMenuRegistry.registry.register({
-    displayText: '载入工作区',
-    preconditionFn: () => 'enabled',
-    callback: async () => {
-      await loadWorkspaceFromFile();
-    },
-    scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
-    id: 'loadWorkspace', 
-    weight: 2
-  });
-  Blockly.ContextMenuRegistry.registry.register({
-    displayText: '运行',
-    preconditionFn: (scope) => {
-      return workspace.value && workspace.value.getAllBlocks(false).length > 0 ? 'enabled' : 'disabled';
-    },
-    callback: async () => {
-        const code = pythonGenerator.workspaceToCode(workspace.value);
-        if (window.pyBridge) {
-            window.pyBridge.executePythonCode(code,actorname.value);
-        }
-    },
-    scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
-    id: 'executePythonCode',
-    weight: 3
-  });
-  // 配置工具箱样式
-  const toolbox = blocklyDiv.querySelector('.blocklyToolboxDiv');
-  if (toolbox) {
-    toolbox.style.overflow = 'hidden';
-  }
-  const toolboxDiv = document.querySelector('.blocklyToolboxDiv');
-  if (toolboxDiv) {
-    toolboxDiv.style.overflow = 'hidden';
-  }
-
-  // 添加块创建事件监听器
-  setupBlockListener();
-
-  workspace.value.addChangeListener((event) => {
-    if (event.type === Blockly.Events.TOOLBOX_ITEM_SELECT) {
-      console.log('选中分类:', event.itemName);
+  try {
+    const blocklyDiv = document.getElementById('blockdiv');
+    if (!blocklyDiv) {
+      console.error('Blockly 容器未找到');
+      return;
     }
-  });
+
+    Blockly.setLocale(CN);
+    initBlocklyAndGenerators();
+
+    workspace.value = Blockly.inject(blocklyDiv, WORKSPACE_CONFIG);
+    Blockly.ContextMenuRegistry.registry.register({
+      displayText: '保存工作区',
+      preconditionFn: (scope) => {
+        return workspace.value && workspace.value.getAllBlocks(false).length > 0 ? 'enabled' : 'disabled';
+      },
+      callback: async () => {
+        const workspaceData = Blockly.serialization.workspaces.save(workspace.value);
+        const success = await saveWorkspaceToFile(workspaceData);
+        if (success) {
+          console.log('工作区已保存到文件');
+        }
+      },
+      scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
+      id: 'saveWorkspace',
+      weight: 1
+    });
+    Blockly.ContextMenuRegistry.registry.register({
+      displayText: '载入工作区',
+      preconditionFn: () => 'enabled',
+      callback: async () => {
+        await loadWorkspaceFromFile();
+      },
+      scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
+      id: 'loadWorkspace',
+      weight: 2
+    });
+    Blockly.ContextMenuRegistry.registry.register({
+      displayText: '运行',
+      preconditionFn: (scope) => {
+        return workspace.value && workspace.value.getAllBlocks(false).length > 0 ? 'enabled' : 'disabled';
+      },
+      callback: async () => {
+          const code = pythonGenerator.workspaceToCode(workspace.value);
+          console.log(code);
+          if (window.pyBridge) {
+              window.pyBridge.executePythonCode(code,actorname.value);
+          }
+      },
+      scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
+      id: 'executePythonCode',
+      weight: 3
+    });
+
+    const toolbox = blocklyDiv.querySelector('.blocklyToolboxDiv');
+    if (toolbox) {
+      toolbox.style.overflow = 'hidden';
+    }
+    const toolboxDiv = document.querySelector('.blocklyToolboxDiv');
+    if (toolboxDiv) {
+      toolboxDiv.style.overflow = 'hidden';
+    }
+
+    setupBlockListener();
+    workspace.value.addChangeListener((event) => {
+      try {
+        if (event.type === Blockly.Events.BLOCK_CREATE) {
+          handleBlockCreate(event);
+        }
+        // 增加删除块事件健壮性处理
+        if (event.type === Blockly.Events.BLOCK_DELETE) {
+          // 中文注释：删除块时可做自定义处理，确保 blockId 存在
+          if (event.blockId) {
+            const block = workspace.value.getBlockById(event.blockId);
+            if (block) {
+              // 可在此处添加自定义删除逻辑
+              // console.log('删除块:', block.type);
+            }
+          }
+        }
+        // 可扩展其它事件类型
+      } catch (err) {
+        // 中文注释：捕获并输出所有事件监听异常，避免未处理错误
+        console.error('Blockly 事件监听异常:', err);
+      }
+    });
+  } catch (err) {
+    console.error('initBlockly 初始化异常:', err);
+  }
 };
 
 const setupBlockListener = () => {
-  if (!workspace.value) return;
-
+  if (!workspace.value) {
+    console.error('setupBlockListener: workspace 未初始化');
+    return;
+  }
   workspace.value.addChangeListener((event) => {
-    if (event.type === Blockly.Events.BLOCK_CREATE) {
-      handleBlockCreate(event);
+    try {
+      if (event.type === Blockly.Events.BLOCK_CREATE) {
+        handleBlockCreate(event);
+      }
+      // 增加删除块事件健壮性处理
+      if (event.type === Blockly.Events.BLOCK_DELETE) {
+        // 中文注释：删除块时可做自定义处理，确保 blockId 存在
+        if (event.blockId) {
+          const block = workspace.value.getBlockById(event.blockId);
+          if (block) {
+            // 可在此处添加自定义删除逻辑
+            // console.log('删除块:', block.type);
+          }
+        }
+      }
+      // 可扩展其它事件类型
+    } catch (err) {
+      // 中文注释：捕获并输出所有事件监听异常，避免未处理错误
+      console.error('Blockly 事件监听异常:', err);
     }
   });
 };
 
 // 处理块创建事件
 const handleBlockCreate = (event) => {
+  if (!workspace.value) {
+    console.error('handleBlockCreate: workspace 未初始化');
+    return;
+  }
   const block = workspace.value.getBlockById(event.blockId);
   if (!block) return;
-
   const blockType = block.type;
   const categoryName = BLOCK_CATEGORY_MAP[blockType];
-
   if (categoryName) {
     const toolbox = workspace.value.getToolbox();
     if (toolbox) {
@@ -412,8 +449,8 @@ const updateScale = () => {
       z: parseFloat(sz.value),
       actorName: actorname.value
     }));
-    console.error('updateScale', sx.value, sy.value, sz.value); // 调试用，确保值正确传递到 Python 端
-  } 
+    console.error('updateScale', sx.value, sy.value, sz.value); // 调试用，确保���正确传递到 Python 端
+  }
 }
 
 //关闭浮动窗口
@@ -460,16 +497,32 @@ const copyToClipboard = async () => {
 };
 
 onMounted(() => {
-  scenename.value = route.query.sceneName;
-  actorname.value = route.query.objectName;
-  character.value = decodeURIComponent(route.query.path);
-  routename.value = route.query.routename;
-  initBlockly();
-  document.addEventListener('mousemove', handleResizeMove);
-  document.addEventListener('mouseup', handleResizeUp);
-  document.addEventListener('mousemove', onDrag);
-  document.addEventListener('mouseup', stopDrag);
-  // 不再添加 keydown 监听，交由全局 InputEventBridge 统一处理 ESC
+  try {
+    // 1. 路由参数健壮性处理
+    scenename.value = route.query.sceneName || '';
+    actorname.value = route.query.objectName || '';
+    character.value = decodeURIComponent(route.query.path || '');
+    routename.value = route.query.routename || '';
+    // 2. 初始化 Blockly，加异常处理
+    initBlockly();
+    // 3. 事件监听方法健壮性检查
+    if (typeof handleResizeMove === 'function') {
+      document.addEventListener('mousemove', handleResizeMove);
+    }
+    if (typeof handleResizeUp === 'function') {
+      document.addEventListener('mouseup', handleResizeUp);
+    }
+    if (typeof onDrag === 'function') {
+      document.addEventListener('mousemove', onDrag);
+    }
+    if (typeof stopDrag === 'function') {
+      document.addEventListener('mouseup', stopDrag);
+    }
+    // 全局 ESC 已在 InputEventBridge 中处理，这里不再重复监听，避免阻止输入行为
+  } catch (err) {
+    // 中文注释：捕获并输出所有初始化异常，便于调试
+    console.error('Object.vue mounted 初始化异常:', err);
+  }
 });
 
 // 组件卸载时清理

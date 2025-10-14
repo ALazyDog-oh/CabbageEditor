@@ -1,9 +1,12 @@
-from PyQt6.QtWidgets import QDockWidget, QWidget
-from PyQt6.QtWebChannel import QWebChannel
+import json
+
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor
-from utils.Bridge import Bridge
-import json
+from PyQt6.QtWebChannel import QWebChannel
+from PyQt6.QtWidgets import QDockWidget, QWidget
+from utils.Bridge import get_bridge
+from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEnginePage
+
 
 class AddDock(QDockWidget):
     def __init__(self, browser, name: str, path: str, CentralManager, Main_Window, isFloat: bool):
@@ -43,7 +46,28 @@ class AddDock(QDockWidget):
         self.browser.setStyleSheet("background: transparent;")
         self.browser.page().setBackgroundColor(QColor(Qt.GlobalColor.transparent))
         self.browser.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+        # Create off-the-record profile for this dock to isolate memory/cache
+        try:
+            self.profile = QWebEngineProfile(self)
+            # use ephemeral storage and no cache to minimize accumulation
+            self.profile.setOffTheRecord(True)
+            try:
+                self.profile.setHttpCacheType(QWebEngineProfile.HttpCacheType.MemoryHttpCache)
+                self.profile.setHttpCacheMaximumSize(0)
+                self.profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.NoPersistentCookies)
+            except Exception:
+                pass
+            page = QWebEnginePage(self.profile, self.browser)
+            self.browser.setPage(page)
+        except Exception:
+            self.profile = None
         self.browser.load(self.url)
+        # 向页面注入当前 dock 的 routename，供前端事件携带
+        try:
+            self.browser.loadFinished.connect(lambda ok, name=self.name: self.browser.page().runJavaScript(
+                f"window.__dockRouteName = {json.dumps(name)};"))
+        except Exception:
+            pass
 
         self.setWidget(self.browser)
 
@@ -67,9 +91,13 @@ class AddDock(QDockWidget):
 
     def setup_web_channel(self) -> None:
         self.channel = QWebChannel()
-        self.bridge = Bridge(self.centralmanager)
+        self.bridge = get_bridge(self.centralmanager)
         self.channel.registerObject("pyBridge", self.bridge)
-        self.browser.page().setWebChannel(self.channel)
+        # Set on the current page (may be a custom page)
+        try:
+            self.browser.page().setWebChannel(self.channel)
+        except Exception:
+            pass
         self.centralmanager.register_dock(self.name, self)
 
     def connect_signals(self) -> None:
@@ -79,12 +107,23 @@ class AddDock(QDockWidget):
         self.destroyed.connect(self.cleanup_resources)
 
     def dock_event(self, event_type: str, event_data: str) -> None:
+        # 仅处理发给当前 dock 的事件（通过 routename 过滤）
+        target_ok = True
+        try:
+            data_obj = json.loads(event_data) if isinstance(event_data, str) else (event_data or {})
+            target = data_obj.get("routename")
+            if target is not None and target != self.name:
+                return
+        except Exception:
+            # 解析失败则保守忽略（避免误操作所有 dock）
+            return
+
         if event_type == "drag" and self.isFloating():
             try:
-                data = json.loads(event_data)
+                data = data_obj if isinstance(data_obj, dict) else {}
                 current_pos = self.pos()
-                new_x = current_pos.x() + data["deltaX"]
-                new_y = current_pos.y() + data["deltaY"]
+                new_x = current_pos.x() + int(data.get("deltaX", 0))
+                new_y = current_pos.y() + int(data.get("deltaY", 0))
                 self.move(new_x, new_y)
             except Exception as e:
                 print(f"处理拖拽事件失败: {str(e)}")
@@ -92,18 +131,18 @@ class AddDock(QDockWidget):
             self.close()
         elif event_type == "float":
             try:
-                data = json.loads(event_data)
-                self.setFloating(data["isFloating"])
+                data = data_obj if isinstance(data_obj, dict) else {}
+                self.setFloating(bool(data.get("isFloating", False)))
                 self.raise_()
             except Exception as e:
                 print(f"处理float事件失败: {str(e)}")
         elif event_type == "resize":
             try:
-                data = json.loads(event_data)
+                data = data_obj if isinstance(data_obj, dict) else {}
                 x = int(data.get("x", self.pos().x()))
                 y = int(data.get("y", self.pos().y()))
-                width = int(data["width"])
-                height = int(data["height"])
+                width = int(data.get("width", self.width()))
+                height = int(data.get("height", self.height()))
                 self.move(x, y)
                 self.resize(width, height)
                 self.update()
@@ -149,12 +188,48 @@ class AddDock(QDockWidget):
 
     def cleanup_resources(self) -> None:
         try:
+            # Disconnect from bridge signals to avoid sending to dead dock
+            try:
+                self.bridge.ai_response.disconnect(self.send_ai_message_to_js)
+            except Exception:
+                pass
+            try:
+                self.bridge.dock_event.disconnect(self.dock_event)
+            except Exception:
+                pass
+            # Unregister and release webchannel resources
+            try:
+                if hasattr(self, "channel") and self.channel:
+                    self.channel.deregisterObject("pyBridge")
+            except Exception:
+                pass
+            try:
+                if hasattr(self, "browser") and self.browser and self.browser.page():
+                    self.browser.page().setWebChannel(None)
+            except Exception:
+                pass
+            if hasattr(self, "channel") and self.channel:
+                self.channel.deleteLater()
+            # Remove from central manager safely
+            try:
+                self.centralmanager.delete_dock(self.name)
+            except Exception:
+                pass
+            # Clear and delete profile to free Chromium resources
+            try:
+                if getattr(self, "profile", None) is not None:
+                    try:
+                        self.profile.clearHttpCache()
+                    except Exception:
+                        pass
+                    self.profile.deleteLater()
+                    self.profile = None
+            except Exception:
+                pass
+            # Schedule browser deletion
             if hasattr(self, "browser"):
                 self.browser.deleteLater()
                 print(f"清理浏览器资源: {self.name}")
-            if hasattr(self, "channel"):
-                self.channel.deregisterObject("pyBridge")
-            self.centralmanager.delete_dock(self.name)
         except Exception as e:
             print(f"资源清理异常: {str(e)}")
 

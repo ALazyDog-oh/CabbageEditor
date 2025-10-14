@@ -24,8 +24,10 @@ export function useDragResize() {
     // 拖动标题栏时自动变成浮动状态
     if (!isFloating.value && window.pyBridge) {
       isFloating.value = true;
+      const routename = window.__dockRouteName;
       window.pyBridge.forwardDockEvent('float', JSON.stringify({
-        isFloating: true
+        isFloating: true,
+        routename
       }));
     }
     event.currentTarget.classList.add('bg-[#7BA590]/80');
@@ -45,9 +47,11 @@ export function useDragResize() {
     const deltaY = event.clientY - dragState.value.startY;
 
     if (window.pyBridge) {
+      const routename = window.__dockRouteName;
       window.pyBridge.forwardDockEvent('drag', JSON.stringify({
         deltaX,
-        deltaY
+        deltaY,
+        routename
       }));
     }
 
@@ -63,8 +67,10 @@ export function useDragResize() {
 const handleDoubleClick = () => {
   if (isFloating.value && window.pyBridge) {
     isFloating.value = false;
+    const routename = window.__dockRouteName;
     window.pyBridge.forwardDockEvent('float', JSON.stringify({
-      isFloating: false
+      isFloating: false,
+      routename
     }));
   }
 };
@@ -126,9 +132,11 @@ const handleDoubleClick = () => {
     }
 
     if (window.pyBridge) {
+      const routename = window.__dockRouteName;
       const payload = {
         width: newWidth,
-        height: newHeight
+        height: newHeight,
+        routename
       };
       window.pyBridge.forwardDockEvent('resize', JSON.stringify(payload));
     }

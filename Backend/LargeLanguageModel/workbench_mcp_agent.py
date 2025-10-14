@@ -1,18 +1,19 @@
 import json
-import asyncio # Import asyncio to run the async main function
+import warnings
 from dataclasses import dataclass
 from typing import List
-from pathlib import Path
+
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.messages import TextMessage
+from autogen_core import AgentId, SingleThreadedAgentRuntime
 from autogen_core import (
     FunctionCall,
     MessageContext,
     RoutedAgent,
     message_handler,
 )
+from autogen_core.model_context import BufferedChatCompletionContext
 from autogen_core.model_context import ChatCompletionContext
-from autogen_agentchat.messages import TextMessage
-from autogen_agentchat.agents import AssistantAgent
-
 from autogen_core.models import (
     AssistantMessage,
     ChatCompletionClient,
@@ -23,14 +24,10 @@ from autogen_core.models import (
     UserMessage,
 )
 from autogen_core.tools import ToolResult, Workbench
-
-from autogen_core import AgentId, SingleThreadedAgentRuntime
-from autogen_core.model_context import BufferedChatCompletionContext
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.tools.mcp import McpWorkbench
-from autogen_ext.tools.mcp import StdioServerParams, mcp_server_tools
+from autogen_ext.tools.mcp import StdioServerParams
 
-import warnings
 warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed transport")
 
 @dataclass

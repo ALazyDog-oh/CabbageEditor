@@ -1,12 +1,11 @@
-import asyncio, json
-
-from typing import Optional
+import asyncio
+import json
 from contextlib import AsyncExitStack
-
-from openai import OpenAI
+from typing import Optional
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from openai import OpenAI
 
 
 class MCPClient:

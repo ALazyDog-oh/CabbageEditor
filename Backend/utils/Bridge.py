@@ -1,13 +1,13 @@
-from logging import root
-from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt6.QtWidgets import QApplication
-import json, os, time
-
+import json
+import os
+import time
 import traceback
 
+from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot, QObject
+from PyQt6.QtWidgets import QApplication
 from mcp_client import qa_one_sync
-from utils.StaticComponents import root_dir, scene_dict
 from utils.FileHandleComponent import FileHandler
+from utils.StaticComponents import root_dir, scene_dict
 
 try:
     import CoronaEngine
@@ -15,12 +15,31 @@ try:
 except ImportError:
     from CoronaEngineFallback import CoronaEngine
 
+# --- Singleton accessor for Bridge ---
+_bridge_singleton = None  # type: Bridge | None
+
+def get_bridge(central_manager=None):
+    """Return the global Bridge singleton instance.
+    If not created, instantiate with the optional central_manager.
+    If already created and central_manager is provided while the instance
+    has no central_manager yet, backfill it.
+    """
+    global _bridge_singleton
+    if _bridge_singleton is None:
+        # Delay import type hint to avoid NameError before class definition
+        instance = Bridge(central_manager)
+        _bridge_singleton = instance
+    else:
+        if central_manager is not None and getattr(_bridge_singleton, "central_manager", None) is None:
+            _bridge_singleton.central_manager = central_manager
+    return _bridge_singleton
+
 class WorkerThread(QThread):
     finished = pyqtSignal()
     result_ready = pyqtSignal(object)
     
-    def __init__(self, func, *args, **kwargs):
-        super().__init__()
+    def __init__(self, func, *args, parent: QObject | None = None, **kwargs):
+        super().__init__(parent)
         self.func = func
         self.args = args
         self.kwargs = kwargs
@@ -42,6 +61,8 @@ class Bridge(QObject):
     ai_response = pyqtSignal(str)
     dock_event = pyqtSignal(str, str)
     command_to_main = pyqtSignal(str, str)
+    # 新增：专用于按键事件的信号（仅发送解析后的按键字符串）
+    key_event = pyqtSignal(str)
     script_dir = os.path.join(root_dir, "CabbageEditor", "Backend", "script")
     saves_dir = os.path.join(root_dir, "CabbageEditor", "saves")
     os.makedirs(script_dir, exist_ok=True)
@@ -53,6 +74,8 @@ class Bridge(QObject):
         self.camera_position = [0.0, 5.0, 10.0]
         self.camera_forward = [0.0, 1.5, 0.0]
         self.central_manager = central_manager
+        # Track worker threads to avoid premature GC and leaks
+        self._workers: set[WorkerThread] = set()
 
     @pyqtSlot(str, str, str, str, str)
     def addDockWidget(self, routename, routepath, position="left", floatposition="None",size=None):
@@ -142,10 +165,13 @@ class Bridge(QObject):
                 }
                 return json.dumps(error_response)
 
-        # 您原有的WorkerThread启动逻辑完全正确，保持不变
-        self.worker_thread = WorkerThread(ai_work)
-        self.worker_thread.result_ready.connect(self.ai_response.emit)
-        self.worker_thread.start()
+        # Create a worker per request, parented to Bridge for lifecycle, and clean up on finish
+        worker = WorkerThread(ai_work, parent=self)
+        worker.result_ready.connect(self.ai_response.emit)
+        worker.finished.connect(worker.deleteLater)
+        worker.finished.connect(lambda: self._workers.discard(worker))
+        self._workers.add(worker)
+        worker.start()
 
     @pyqtSlot(str, str)
     def openFileDialog(self, sceneName, file_type="model"):
@@ -198,8 +224,40 @@ class Bridge(QObject):
     @pyqtSlot(str, str)
     def send_message_to_main(self, command_name, command_data):
         try:
-            print(command_name, command_data)
+            # 兼容旧逻辑：继续转发完整命令
             self.command_to_main.emit(command_name, command_data)
+            # 解析 JSON，尝试提取按键字符串，并通过 key_event 单独发送
+            key_text = None
+            try:
+                payload = json.loads(command_data) if command_data else {}
+                if isinstance(payload, dict):
+                    # 常见字段名：key/code/combo/keys/comboKeys 或嵌套 event
+                    if isinstance(payload.get('key'), str):
+                        key_text = payload['key']
+                    elif isinstance(payload.get('code'), str):
+                        key_text = payload['code']
+                    elif isinstance(payload.get('combo'), str):
+                        key_text = payload['combo']
+                    elif isinstance(payload.get('keys'), list):
+                        key_text = '+'.join(map(str, payload['keys']))
+                    elif isinstance(payload.get('comboKeys'), list):
+                        key_text = '+'.join(map(str, payload['comboKeys']))
+                    elif isinstance(payload.get('event'), dict):
+                        ev = payload['event']
+                        if isinstance(ev.get('key'), str):
+                            key_text = ev['key']
+                        elif isinstance(ev.get('code'), str):
+                            key_text = ev['code']
+                # 也可根据 command_name 判断类型，例如 'key_event'
+                if not key_text and command_name and command_name.lower().startswith('key'):
+                    # 兜底直接使用 command_name
+                    key_text = command_name
+            except Exception:
+                # 无法解析为 JSON，忽略
+                pass
+
+            if key_text:
+                self.key_event.emit(key_text)
         except Exception as e:
             print(f"send_message_to_main failed: {str(e)}")
 
@@ -266,30 +324,18 @@ class Bridge(QObject):
     @pyqtSlot(str, int)
     def executePythonCode(self, code, index):
         try:
-            filename = f"blockly_code_{index}.py"
+            filename = f"blockly_code.py"
             filepath = os.path.join(self.script_dir, filename)
-            indented_code = "\n".join(
-                f"    {line}" if line.strip() else line for line in code.split("\n")
-            )
-            fullcode = f"""
-try:
-    import CoronaEngine
-except ImportError:
-    from CoronaEngineFallback import CoronaEngine
-
-def run():
-{indented_code}
-                """
             with open(filepath, "w", encoding="utf-8") as f:
-                f.write(fullcode)
+                f.write(code)
 
             # 创建runScript.py
             run_script_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "runScript.py"
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "runScript.py"
             )
             script_files = []
             for f in os.listdir(self.script_dir):
-                if f.startswith("blockly_code_") and f.endswith(".py"):
+                if f.startswith("blockly_code") and f.endswith(".py"):
                     script_files.append(f.replace(".py", ""))
             run_script_content = ""
             for script in script_files:

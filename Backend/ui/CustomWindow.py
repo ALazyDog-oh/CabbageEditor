@@ -1,6 +1,8 @@
-from PyQt6.QtWidgets import QMainWindow
-from PyQt6.QtCore import Qt
 from typing import Optional
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMainWindow
+
 
 class CustomWindow(QMainWindow):
     def __init__(self, parent: Optional[QMainWindow] = None):

@@ -1,12 +1,9 @@
 import asyncio
-
 from pathlib import Path
 
-from autogen_core.models import ModelFamily
-
-from autogen_agentchat.ui import Console
 from autogen_agentchat.agents import AssistantAgent
-
+from autogen_agentchat.ui import Console
+from autogen_core.models import ModelFamily
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.tools.mcp import StdioServerParams, mcp_server_tools
 

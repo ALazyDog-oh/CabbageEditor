@@ -73,4 +73,9 @@ if __name__ == '__main__':
      print('python main')
      cleanup_blockly_files()
      while(True):
+        runscript_spec = importlib.util.find_spec("runScript")
+        if runscript_spec is not None:
+            runScript = importlib.util.module_from_spec(runscript_spec)
+            runscript_spec.loader.exec_module(runScript)
+            runScript.run()
         MainWindow.app.processEvents()

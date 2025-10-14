@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from PyQt6.QtCore import QUrl
 
 root_dir = Path(__file__).resolve().parents[3]

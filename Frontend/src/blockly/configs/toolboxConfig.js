@@ -50,11 +50,15 @@ export const TOOLBOX_CONFIG = {
       colour: '#FFDE59',
       contents: [
         { kind: 'block', type: 'event_gameStart'},
-        { kind: 'bkock', type: 'event_keyboard'},
-        { kind: 'bkock', type: 'event_RB'},
-        { kind: 'bkock', type: 'event_broadcast'},
-        { kind: 'bkock', type: 'event_broadcastWait'}
-
+        { kind: 'block', type: 'event_keyboard'},
+        { kind: 'block', type: 'event_RB'},
+        { kind: 'block', type: 'event_broadcast'},
+        { kind: 'block', type: 'event_broadcastWait'},
+        { kind: 'block', type: 'event_keyboard_combo'},
+        { kind: 'block', type: 'event_mouse_click'},
+        { kind: 'block', type: 'event_mouse_move'},
+        { kind: 'block', type: 'event_mouse_wheel'},
+        { kind: 'block', type: 'event_mouse_contextmenu'},
       ]
     },
     {
@@ -63,18 +67,18 @@ export const TOOLBOX_CONFIG = {
       colour: '#FE9900',
       contents: [
         { kind: 'block', type: 'control_wait'},
-        { kind: 'bkock', type: 'control_for'},
-        { kind: 'bkock', type: 'control_forX'},
-        { kind: 'bkock', type: 'control_if'},
-        { kind: 'bkock', type: 'control_else'},
-        { kind: 'bkock', type: 'control_wait2'},
-        { kind: 'bkock', type: 'control_until'},
-        { kind: 'bkock', type: 'control_stop'},
-        { kind: 'bkock', type: 'control_cloneStart'},
-        { kind: 'bkock', type: 'control_clone'},
-        { kind: 'bkock', type: 'control_cloneDEL'},
-        { kind: 'bkock', type: 'control_senceSet'},
-        { kind: 'bkock', type: 'control_nextSence'},
+        { kind: 'block', type: 'control_for'},
+        { kind: 'block', type: 'control_forX'},
+        { kind: 'block', type: 'control_if'},
+        { kind: 'block', type: 'control_else'},
+        { kind: 'block', type: 'control_wait2'},
+        { kind: 'block', type: 'control_until'},
+        { kind: 'block', type: 'control_stop'},
+        { kind: 'block', type: 'control_cloneStart'},
+        { kind: 'block', type: 'control_clone'},
+        { kind: 'block', type: 'control_cloneDEL'},
+        { kind: 'block', type: 'control_senceSet'},
+        { kind: 'block', type: 'control_nextSence'},
       ]
     },
     {

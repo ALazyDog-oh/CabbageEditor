@@ -1,8 +1,10 @@
-from PyQt6.QtWidgets import QWidget
+import os
+from typing import Any, Dict, Optional
+
 from PyQt6.QtCore import QRect, pyqtSignal
 from PyQt6.QtGui import QPainter, QPixmap
-from typing import Any, Dict, Optional
-import os
+from PyQt6.QtWidgets import QWidget
+
 
 class RenderWidget(QWidget):
     geometry_changed = pyqtSignal(QRect)

@@ -1,11 +1,13 @@
-from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWebChannel import QWebChannel
+import json
+
 from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtGui import QColor, QGuiApplication
-from utils.CentralManager import CentralManager
-from utils.Bridge import Bridge
+from PyQt6.QtWebChannel import QWebChannel
+from PyQt6.QtWebEngineWidgets import QWebEngineView
 from ui.DockWidget import AddDock, RemoveDock
-import json
+from utils.Bridge import get_bridge
+from utils.CentralManager import CentralManager
+
 
 class BrowserWidget(QWebEngineView):
     def __init__(self, Main_Window, url:str):
@@ -27,7 +29,7 @@ class BrowserWidget(QWebEngineView):
 
     def setup_web_channel(self):
         self.channel = QWebChannel()
-        self.bridge = Bridge(self.CentralManager)
+        self.bridge = get_bridge(self.CentralManager)
         self.channel.registerObject("pyBridge", self.bridge)
         self.page().setWebChannel(self.channel)
 
@@ -49,19 +51,18 @@ class BrowserWidget(QWebEngineView):
             del self.CentralManager.docks[routename]
             return
         try:
-            self.dock = AddDock(browser, routename, routepath, self.CentralManager, self.Main_Window, isFloat)
-            self.dock.bridge.create_route.connect(lambda *args: self.AddDockWidget(*args))
-            self.dock.bridge.remove_route.connect(self.RemoveDockWidget)
-            self.dock.bridge.command_to_main.connect(self.handle_command_to_main)
+            dock = AddDock(browser, routename, routepath, self.CentralManager, self.Main_Window, isFloat)
+            # With a global singleton bridge, main connections are already set in connect_signals.
+            # Avoid duplicating connections here to prevent multiple slot invocations.
             if isFloat:
                 if size:
-                    self.dock.resize(size.get("width"),size.get("height"))
-                    self.dock.browser.resize(size.get("width"),size.get("height"))
-                self.dock.setWindowFlags(self.dock.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
-                self.dock.move(pos)
-                self.dock.show()
+                    dock.resize(size.get("width"),size.get("height"))
+                    dock.browser.resize(size.get("width"),size.get("height"))
+                dock.setWindowFlags(dock.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
+                dock.move(pos)
+                dock.show()
             else:
-                self.Main_Window.addDockWidget(dock_area,self.dock)
+                self.Main_Window.addDockWidget(dock_area, dock)
 
         except Exception as e:
             print(f"添加停靠窗口失败: {str(e)}")
@@ -73,10 +74,6 @@ class BrowserWidget(QWebEngineView):
         if dock:
             self.Main_Window.removeDockWidget(dock)
             RemoveDock(browser, routename, self.CentralManager)
-
-            if hasattr(dock, "bridge"):
-                dock.bridge.create_route.disconnect()
-                dock.bridge.remove_route.disconnect()
 
     def get_dock_area(self, position, floatposition):
         position_map = {
@@ -104,20 +101,48 @@ class BrowserWidget(QWebEngineView):
     def handle_command_to_main(self, command_name, command_data):
         if command_name == "go_home":
             self.load(self.url)
-            print(self.url)
             return
 
         if command_name == "input_event":
+            # Swallow input_event logs: parse silently, no prints
             try:
-                data = json.loads(command_data) if isinstance(command_data, str) else command_data
-                # Minimal verification/logging; extend as needed to route to engine
-                kind = data.get("kind")
-                etype = data.get("type")
-                scene = data.get("sceneName")
-                print(f"[INPUT] {kind}/{etype} scene={scene} data={data}")
-            except Exception as e:
-                print(f"[INPUT] Failed to parse input_event: {e} -> raw={command_data}")
+                _ = json.loads(command_data) if isinstance(command_data, str) else command_data
+            except Exception:
+                pass
             return
 
-        # Fallback: log unknown command
-        print(f"[Bridge] Unknown command: {command_name} data={command_data}")
+        # Fallback: retain minimal logging for unknown commands if needed
+        # print(f"[Bridge] Unknown command: {command_name} data={command_data}")
+        return
+
+    def closeEvent(self, event):
+        try:
+            # Disconnect signals to this BrowserWidget (auto-disconnect happens on QObject dtor, but we ensure it)
+            try:
+                self.bridge.create_route.disconnect(self.AddDockWidget)
+            except Exception:
+                pass
+            try:
+                self.bridge.remove_route.disconnect(self.RemoveDockWidget)
+            except Exception:
+                pass
+            try:
+                self.bridge.command_to_main.disconnect(self.handle_command_to_main)
+            except Exception:
+                pass
+            # Unhook WebChannel and deregister object
+            try:
+                if hasattr(self, "channel") and self.channel:
+                    self.channel.deregisterObject("pyBridge")
+            except Exception:
+                pass
+            try:
+                if self.page():
+                    self.page().setWebChannel(None)
+            except Exception:
+                pass
+            # Delete channel later to free resources
+            if hasattr(self, "channel") and self.channel:
+                self.channel.deleteLater()
+        finally:
+            super().closeEvent(event)
