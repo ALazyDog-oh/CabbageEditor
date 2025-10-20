@@ -224,42 +224,71 @@ class Bridge(QObject):
     @pyqtSlot(str, str)
     def send_message_to_main(self, command_name, command_data):
         try:
-            # 兼容旧逻辑：继续转发完整命令
-            self.command_to_main.emit(command_name, command_data)
-            # 解析 JSON，尝试提取按键字符串，并通过 key_event 单独发送
-            key_text = None
             try:
-                payload = json.loads(command_data) if command_data else {}
-                if isinstance(payload, dict):
-                    # 常见字段名：key/code/combo/keys/comboKeys 或嵌套 event
-                    if isinstance(payload.get('key'), str):
-                        key_text = payload['key']
-                    elif isinstance(payload.get('code'), str):
-                        key_text = payload['code']
-                    elif isinstance(payload.get('combo'), str):
-                        key_text = payload['combo']
-                    elif isinstance(payload.get('keys'), list):
-                        key_text = '+'.join(map(str, payload['keys']))
-                    elif isinstance(payload.get('comboKeys'), list):
-                        key_text = '+'.join(map(str, payload['comboKeys']))
-                    elif isinstance(payload.get('event'), dict):
-                        ev = payload['event']
-                        if isinstance(ev.get('key'), str):
-                            key_text = ev['key']
-                        elif isinstance(ev.get('code'), str):
-                            key_text = ev['code']
-                # 也可根据 command_name 判断类型，例如 'key_event'
-                if not key_text and command_name and command_name.lower().startswith('key'):
-                    # 兜底直接使用 command_name
-                    key_text = command_name
+                self.command_to_main.emit(command_name, command_data)
             except Exception:
-                # 无法解析为 JSON，忽略
                 pass
-
+            key_text = self._extract_key_text(command_name, command_data)
             if key_text:
-                self.key_event.emit(key_text)
+                try:
+                    self.key_event.emit(key_text)
+                except Exception:
+                    pass
         except Exception as e:
             print(f"send_message_to_main failed: {str(e)}")
+
+    def _extract_key_text(self, command_name, command_data):
+        try:
+            if not command_data:
+                return None
+            payload = None
+            if not isinstance(command_data, str):
+                payload = command_data
+            else:
+                s = command_data.strip()
+                if not s:
+                    return None
+                try:
+                    payload = json.loads(s)
+                except Exception:
+                    return s
+            if isinstance(payload, dict):
+                for k in ('key', 'code', 'combo', 'text', 'name', 'key_text'):
+                    v = payload.get(k)
+                    if isinstance(v, str) and v.strip():
+                        return v.strip()
+                    if isinstance(v, list) and v:
+                        try:
+                            return '+'.join(map(str, v))
+                        except Exception:
+                            pass
+                if isinstance(payload.get('keys'), list) and payload.get('keys'):
+                    try:
+                        return '+'.join(map(str, payload.get('keys')))
+                    except Exception:
+                        pass
+                if isinstance(payload.get('comboKeys'), list) and payload.get('comboKeys'):
+                    try:
+                        return '+'.join(map(str, payload.get('comboKeys')))
+                    except Exception:
+                        pass
+                for container in ('event', 'data', 'payload', 'value', 'detail'):
+                    sub = payload.get(container)
+                    if isinstance(sub, dict):
+                        for k in ('key', 'code', 'combo', 'keys', 'comboKeys', 'text', 'name', 'key_text'):
+                            v = sub.get(k)
+                            if isinstance(v, str) and v.strip():
+                                return v.strip()
+                            if isinstance(v, list) and v:
+                                try:
+                                    return '+'.join(map(str, v))
+                                except Exception:
+                                    pass
+            if command_name and isinstance(command_name, str) and command_name.lower().startswith('key'):
+                return command_name
+        except Exception:
+            return None
+        return None
 
     @pyqtSlot(str,str)
     def actorDelete(self, sceneName, actorName):
