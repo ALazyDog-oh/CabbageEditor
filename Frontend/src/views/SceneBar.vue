@@ -25,7 +25,8 @@
 
     <!-- 主内容区域 -->
     <div class="p-4 shadow-md w-full bg-[#a8a4a3]/65 flex flex-col" style="height: calc(100vh - 56px);">
-      <div class="relative flex gap-2">
+      <div class="flex flex-wrap gap-2 mb-4">
+        <div class="relative">
         <button @click.stop="toggleModelDropdown"
           class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200 flex items-center">
             导入模型
@@ -51,22 +52,22 @@
               </button>
             </div>
           </div>
-      <div class="flex gap-2">
+        </div>
+
         <button @click.stop="handleSceneImport"
-          class="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
+          class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
           导入场景
         </button>
         <button @click.stop="saveScene"
-          class="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
+          class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
           保存场景
         </button>
         <button @click.stop="DayNightCycle"
-          class="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
+          class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
           昼夜变换
         </button>
         </div>
-      </div>
-      <div class="flex items-center justify-between space-x-4 mb-4 bg-gray-700/50 p-3 rounded-md">
+      <div class="flex items-center justify-between gap-2 mb-4">
         <label class="text-write whitespace-nowrap">光照方向：</label>
         <label class="text-write">x</label>
         <input type="number" step="0.1" @change="updateSunPosition" @input="e => px = e.target.value"
@@ -81,7 +82,6 @@
           class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
           :value="pz" />
       </div>
-
 
       <div class="flex-1 overflow-y-auto">
         <!-- 场景列表 - 瀑布流布局 -->
@@ -109,10 +109,8 @@
           </div>
         </div>
       </div>
-
     </div>
-
-  </div>
+    </div>
 </template>
 
 <script setup>
@@ -161,11 +159,9 @@ const saveScene = () => {
 
 // 下拉菜单
 const showModelDropdown = ref(false);
-// 切换下拉菜单
 const toggleModelDropdown = () => {
   showModelDropdown.value = !showModelDropdown.value;
 }
-
 // 导入光源
 const importLightSource = () => {
   showModelDropdown.value = false;
