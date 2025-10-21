@@ -25,25 +25,48 @@
 
     <!-- 主内容区域 -->
     <div class="p-4 shadow-md w-full bg-[#a8a4a3]/65 flex flex-col" style="height: calc(100vh - 56px);">
-      <div class="relative mb-4">
-        <button @click.stop="handleFileImport"
-          class="mr-4 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
-          导入模型
-        </button>
+      <div class="relative flex gap-2">
+        <button @click.stop="toggleModelDropdown"
+          class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200 flex items-center">
+            导入模型
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div v-if="showModelDropdown" 
+              v-click-outside="closeModelDropdown"
+              class="absolute z-10 mt-1 w-40 bg-[#a8a4a3]/65 rounded-md shadow-lg">
+            <div class="py-1">
+              <button @click.stop="importLightSource"
+                class="block w-full px-4 py-2 text-sm text-white hover:bg-gray-600 hover:text-gray-900 text-left">
+                光源
+              </button>
+              <button @click.stop="importCamera"
+                class="block w-full px-4 py-2 text-sm text-white hover:bg-gray-600 hover:text-gray-900 text-left">
+                摄像头
+              </button>
+              <button @click.stop="handleFileImport"
+                class="block w-full px-4 py-2 text-sm text-white hover:bg-gray-600 hover:text-gray-900 text-left">
+                自定义模型
+              </button>
+            </div>
+          </div>
+      <div class="flex gap-2">
         <button @click.stop="handleSceneImport"
-          class="mr-4 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
+          class="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
           导入场景
         </button>
         <button @click.stop="saveScene"
-          class="mr-4 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
+          class="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
           保存场景
         </button>
         <button @click.stop="DayNightCycle"
-          class="mr-4 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
+          class="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
           昼夜变换
         </button>
+        </div>
       </div>
-      <div class="flex items-center justify-between space-x-4 mb-4">
+      <div class="flex items-center justify-between space-x-4 mb-4 bg-gray-700/50 p-3 rounded-md">
         <label class="text-write whitespace-nowrap">光照方向：</label>
         <label class="text-write">x</label>
         <input type="number" step="0.1" @change="updateSunPosition" @input="e => px = e.target.value"
@@ -136,7 +159,30 @@ const saveScene = () => {
   }
 };
 
+// 下拉菜单
+const showModelDropdown = ref(false);
+// 切换下拉菜单
+const toggleModelDropdown = () => {
+  showModelDropdown.value = !showModelDropdown.value;
+}
+
+// 导入光源
+const importLightSource = () => {
+  showModelDropdown.value = false;
+  if (window.pyBridge && window.pyBridge.createLight) {
+    window.pyBridge.createLight(currentSceneName.value);
+  }
+};
+// 导入摄像头
+const importCamera = () => {
+  showModelDropdown.value = false;
+  if (window.pyBridge && window.pyBridge.createCamera) {
+    window.pyBridge.createCamera(currentSceneName.value);
+  }
+};
+
 const handleFileImport = () => {
+  showModelDropdown.value = false;
   if (window.pyBridge && window.pyBridge.open_file_dialog) {
     window.pyBridge.open_file_dialog(currentSceneName.value, 'model');
   }
