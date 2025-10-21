@@ -107,13 +107,13 @@ const px=ref('1.0'), py=ref('1.0'), pz=ref('1.0');
 const controlObject = (scene) => {
   if (window.pyBridge) {
     const widgetName = `Object_${scene.name}`;
-    window.pyBridge.addDockWidget(widgetName, `/Object?sceneName=${currentSceneName.value}&objectName=${scene.name}&path=${encodeURIComponent(scene.path)}&routename=${widgetName}`, "right");
+    window.pyBridge.add_dock_widget(widgetName, `/Object?sceneName=${currentSceneName.value}&objectName=${scene.name}&path=${encodeURIComponent(scene.path)}&routename=${widgetName}`, "right");
   }
 };
 
 const updateSunPosition = () => {
   if (window.pyBridge) {
-    window.pyBridge.sunDirection(JSON.stringify({
+    window.pyBridge.sun_direction(JSON.stringify({
       sceneName: currentSceneName.value,
       px: parseFloat(px.value),
       py: parseFloat(py.value),
@@ -124,7 +124,7 @@ const updateSunPosition = () => {
 }
 
 const saveScene = () => {
-  if (window.pyBridge && window.pyBridge.sceneSave) {
+  if (window.pyBridge && window.pyBridge.scene_save) {
     const sceneData = {
       actors: sceneImages.value.map(scene => ({
         name: scene.name,
@@ -132,19 +132,19 @@ const saveScene = () => {
         type: scene.type
       }))
     };
-    window.pyBridge.sceneSave(JSON.stringify(sceneData));
+    window.pyBridge.scene_save(JSON.stringify(sceneData));
   }
 };
 
 const handleFileImport = () => {
-  if (window.pyBridge && window.pyBridge.openFileDialog) {
-    window.pyBridge.openFileDialog(currentSceneName.value, 'model');
+  if (window.pyBridge && window.pyBridge.open_file_dialog) {
+    window.pyBridge.open_file_dialog(currentSceneName.value, 'model');
   }
 };
 
 const handleSceneImport = () => {
-  if (window.pyBridge && window.pyBridge.openFileDialog) {
-    window.pyBridge.openFileDialog(currentSceneName.value, 'scene');
+  if (window.pyBridge && window.pyBridge.open_file_dialog) {
+    window.pyBridge.open_file_dialog(currentSceneName.value, 'scene');
   }
 };
 
@@ -175,17 +175,17 @@ const handleDockEvent = (event_type, event_data) => {
       console.error('处理场景加载响应失败:', error);
     }
   } else if (event_type === 'message'){
-    print(event_data)
+    console.log(event_data)
   }
 };
 
 const deleteActor = (scene) => {
   try {
-    if (window.pyBridge && window.pyBridge.actorDelete) {
-      window.pyBridge.actorDelete(currentSceneName.value,scene.name);
+    if (window.pyBridge && window.pyBridge.actor_delete) {
+      window.pyBridge.actor_delete(currentSceneName.value,scene.name);
       // 删除关联的Dock窗口
       const widgetName = `Object_${scene.name}`;
-      window.pyBridge.removeDockWidget(widgetName);
+      window.pyBridge.remove_dock_widget(widgetName);
     }
     // 从场景列表中移除
     sceneImages.value = sceneImages.value.filter(item => item.name !== scene.name);
@@ -210,7 +210,7 @@ const DayNightCycle = () => {
       pz.value = z.toFixed(2);
       
       if(window.pyBridge){
-        window.pyBridge.sunDirection(JSON.stringify({
+        window.pyBridge.sun_direction(JSON.stringify({
           px: x,
           py: y,
           pz: z
@@ -225,7 +225,7 @@ const DayNightCycle = () => {
 //关闭浮动窗口
 const closeFloat = () => {
   if (window.pyBridge) {
-    window.pyBridge.removeDockWidget("SceneBar");
+    window.pyBridge.remove_dock_widget("SceneBar");
   }
 };
 
@@ -243,7 +243,7 @@ onMounted(() => {
   document.addEventListener('mouseup', handleResizeUp);
   document.addEventListener('mousemove', onDrag);
   document.addEventListener('mouseup', stopDrag);
-  window.pyBridge.sendMessageToDock("AITalkBar", JSON.stringify({"content": "Hello, World!"}));
+  window.pyBridge.send_message_to_dock("AITalkBar", JSON.stringify({"content": "Hello, World!"}));
   if (window.pyBridge) {
     window.pyBridge.dock_event.connect(handleDockEvent);
   };
@@ -255,7 +255,7 @@ onUnmounted(() => {
   document.removeEventListener('mousemove', onDrag);
   document.removeEventListener('mouseup', stopDrag);
   if (window.pyBridge) {
-    window.pyBridge.dockEvent.disconnect(handleDockEvent);
+    window.pyBridge.dock_event.disconnect(handleDockEvent);
   };
 });
 </script>

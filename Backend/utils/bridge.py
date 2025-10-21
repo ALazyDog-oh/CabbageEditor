@@ -11,22 +11,17 @@ from utils.static_components import root_dir, scene_dict
 
 try:
     import CoronaEngine
+
     print("import CoronaEngine")
 except ImportError:
     from corona_engine_fallback import CoronaEngine
 
-# --- Singleton accessor for Bridge ---
-_bridge_singleton = None  # type: Bridge | None
+_bridge_singleton = None
+
 
 def get_bridge(central_manager=None):
-    """Return the global Bridge singleton instance.
-    If not created, instantiate with the optional central_manager.
-    If already created and central_manager is provided while the instance
-    has no central_manager yet, backfill it.
-    """
     global _bridge_singleton
     if _bridge_singleton is None:
-        # Delay import type hint to avoid NameError before class definition
         instance = Bridge(central_manager)
         _bridge_singleton = instance
     else:
@@ -34,10 +29,11 @@ def get_bridge(central_manager=None):
             _bridge_singleton.central_manager = central_manager
     return _bridge_singleton
 
+
 class WorkerThread(QThread):
-    finished = pyqtSignal()
+    work_finished = pyqtSignal()
     result_ready = pyqtSignal(object)
-    
+
     def __init__(self, func, *args, parent: QObject | None = None, **kwargs):
         super().__init__(parent)
         self.func = func
@@ -51,7 +47,7 @@ class WorkerThread(QThread):
         except Exception as e:
             print(f"Worker thread error: {str(e)}")
         finally:
-            self.finished.emit()
+            self.work_finished.emit()
 
 
 class Bridge(QObject):
@@ -61,7 +57,6 @@ class Bridge(QObject):
     ai_response = pyqtSignal(str)
     dock_event = pyqtSignal(str, str)
     command_to_main = pyqtSignal(str, str)
-    # 新增：专用于按键事件的信号（仅发送解析后的按键字符串）
     key_event = pyqtSignal(str)
     script_dir = os.path.join(root_dir, "CabbageEditor", "Backend", "script")
     saves_dir = os.path.join(root_dir, "CabbageEditor", "saves")
@@ -74,11 +69,10 @@ class Bridge(QObject):
         self.camera_position = [0.0, 5.0, 10.0]
         self.camera_forward = [0.0, 1.5, 0.0]
         self.central_manager = central_manager
-        # Track worker threads to avoid premature GC and leaks
         self._workers: set[WorkerThread] = set()
 
     @pyqtSlot(str, str, str, str, str)
-    def addDockWidget(self, routename, routepath, position="left", floatposition="None",size=None):
+    def add_dock_widget(self, routename, routepath, position="left", floatposition="None", size=None):
         try:
             if isinstance(size, str):
                 size = json.loads(size)
@@ -87,27 +81,27 @@ class Bridge(QObject):
         self.create_route.emit(routename, routepath, position, floatposition, size)
 
     @pyqtSlot(str)
-    def removeDockWidget(self, routename):
+    def remove_dock_widget(self, routename):
         self.remove_route.emit(routename)
 
-    @pyqtSlot(str,str)
-    def createActor(self, scene_name, obj_path):
+    @pyqtSlot(str, str)
+    def create_actor(self, scene_name, obj_path):
         name = os.path.basename(obj_path)
         object = CoronaEngine.Actor(obj_path)
-        scene_dict[scene_name]["actor_dict"][name]={
-            "actor":object,
-            "path":obj_path
+        scene_dict[scene_name]["actor_dict"][name] = {
+            "actor": object,
+            "path": obj_path
         }
 
     @pyqtSlot()
-    def removeActor(self):
+    def remove_actor(self):
         scene_dict["mainscene"] = {
             "scene": None,
             "actor_dict": {}
         }
 
     @pyqtSlot(str)
-    def createScene(self, data):
+    def create_scene(self, data):
         scene_name = json.loads(data).get("sceneName")
         if scene_name not in scene_dict:
             scene_dict[scene_name] = {
@@ -117,8 +111,9 @@ class Bridge(QObject):
         else:
             print(f"场景已存在: {scene_name}")
 
-    @pyqtSlot(str,str)
-    def sendMessageToDock(self, routename, json_data):
+
+    @pyqtSlot(str, str)
+    def send_message_to_dock(self, routename, json_data):
         try:
             self.central_manager.send_json_to_dock(routename, json_data)
         except json.JSONDecodeError:
@@ -127,26 +122,12 @@ class Bridge(QObject):
             print(f"发送消息失败: {str(e)}")
 
     @pyqtSlot(str)
-    def sendMessageToAI(self, ai_message: str):
-        """
-        接收来自UI的信号，将消息放入一个工作线程中去请求AI，
-        并通过信号将结果发回UI。
-        """
-
+    def send_message_to_ai(self, ai_message: str):
         def ai_work() -> str:
-            """
-            这个函数将在后台工作线程中执行，因此可以安全地调用阻塞函数。
-            """
             try:
-                # 1. 解析传入的JSON消息
                 msg_data = json.loads(ai_message)
                 query = msg_data.get("message", "")
-
-                # 2. 【核心修改】直接调用我们之前创建的同步版本 qa_one_sync。
-                #    这个函数会阻塞，直到AI返回结果，但这只会阻塞后台线程，不会影响UI。
                 response_text = qa_one_sync(query=query)
-
-                # 3. 将AI返回的纯文本结果包装成标准的成功JSON格式
                 final_response = {
                     "type": "ai_response",
                     "content": response_text,
@@ -154,9 +135,7 @@ class Bridge(QObject):
                     "timestamp": int(time.time()),
                 }
                 return json.dumps(final_response)
-
             except Exception as e:
-                # 4. 如果发生任何错误（网络问题、解析失败等），包装成标准的错误JSON格式
                 error_response = {
                     "type": "error",
                     "content": str(e),
@@ -165,7 +144,6 @@ class Bridge(QObject):
                 }
                 return json.dumps(error_response)
 
-        # Create a worker per request, parented to Bridge for lifecycle, and clean up on finish
         worker = WorkerThread(ai_work, parent=self)
         worker.result_ready.connect(self.ai_response.emit)
         worker.finished.connect(worker.deleteLater)
@@ -174,7 +152,7 @@ class Bridge(QObject):
         worker.start()
 
     @pyqtSlot(str, str)
-    def openFileDialog(self, sceneName, file_type="model"):
+    def open_file_dialog(self, sceneName, file_type="model"):
         file_handler = FileHandler()
         if file_type == "model":
             _, file_path = file_handler.open_file("选择模型文件", "3D模型文件 (*.obj *.fbx *.dae)")
@@ -290,8 +268,8 @@ class Bridge(QObject):
             return None
         return None
 
-    @pyqtSlot(str,str)
-    def actorDelete(self, sceneName, actorName):
+    @pyqtSlot(str, str)
+    def actor_delete(self, sceneName, actorName):
         try:
             if actorName not in scene_dict[sceneName]["actor_dict"]:
                 print(f"当前场景中的角色列表: {list(scene_dict[sceneName]['actor_dict'].keys())}")
@@ -303,28 +281,28 @@ class Bridge(QObject):
             return str(e)
 
     @pyqtSlot(str)
-    def actorOperation(self,data):
+    def actor_operation(self, data):
         try:
             Actor_data = json.loads(data)
             sceneName = Actor_data.get("sceneName")
             actorName = Actor_data.get("actorName")
             Operation = Actor_data.get("Operation")
-            x = float(Actor_data.get("x",0.0))
-            y = float(Actor_data.get("y",0.0))
-            z = float(Actor_data.get("z",0.0))
+            x = float(Actor_data.get("x", 0.0))
+            y = float(Actor_data.get("y", 0.0))
+            z = float(Actor_data.get("z", 0.0))
             match Operation:
                 case "Scale":
-                    CoronaEngine.Actor.scale(scene_dict[sceneName]["actor_dict"][actorName]["actor"],[x,y,z])
+                    CoronaEngine.Actor.scale(scene_dict[sceneName]["actor_dict"][actorName]["actor"], [x, y, z])
                 case "Move":
-                    CoronaEngine.Actor.move(scene_dict[sceneName]["actor_dict"][actorName]["actor"],[x,y,z])
+                    CoronaEngine.Actor.move(scene_dict[sceneName]["actor_dict"][actorName]["actor"], [x, y, z])
                 case "Rotate":
-                    CoronaEngine.Actor.rotate(scene_dict[sceneName]["actor_dict"][actorName]["actor"],[x,y,z])
+                    CoronaEngine.Actor.rotate(scene_dict[sceneName]["actor_dict"][actorName]["actor"], [x, y, z])
         except Exception as e:
             print(f"Actor transform error: {str(e)}")
             return
 
     @pyqtSlot(str)
-    def cameraMove(self, data):
+    def camera_move(self, data):
         try:
             move_data = json.loads(data)
             sceneName = move_data.get("sceneName", "scene1")
@@ -332,33 +310,32 @@ class Bridge(QObject):
             forward = move_data.get("forward", [0.0, 1.5, 0.0])
             up = move_data.get("up", [0.0, -1.0, 0.0])
             fov = float(move_data.get("fov", 45.0))
-            CoronaEngine.Scene.setCamera(scene_dict[sceneName]["scene"],position, forward, up, fov)
+            CoronaEngine.Scene.setCamera(scene_dict[sceneName]["scene"], position, forward, up, fov)
         except Exception as e:
             print(f"摄像头移动错误: {str(e)}")
 
     @pyqtSlot(str)
-    def sunDirection(self, data):
+    def sun_direction(self, data):
         try:
             sun_data = json.loads(data)
-            sceneName = sun_data.get("sceneName","scene1")
+            sceneName = sun_data.get("sceneName", "scene1")
             px = float(sun_data.get("px", 1.0))
             py = float(sun_data.get("py", 1.0))
             pz = float(sun_data.get("pz", 1.0))
             direction = [px, py, pz]
-            CoronaEngine.Scene.setSunDirection(scene_dict[sceneName]["scene"],direction)
+            CoronaEngine.Scene.setSunDirection(scene_dict[sceneName]["scene"], direction)
         except Exception as e:
             error_response = {"type": "error", "message": str(e)}
             self.dock_event.emit("sunDirectionError", json.dumps(error_response))
 
     @pyqtSlot(str, int)
-    def executePythonCode(self, code, index):
+    def execute_python_code(self, code, index):
         try:
             filename = f"blockly_code.py"
             filepath = os.path.join(self.script_dir, filename)
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(code)
 
-            # 创建runScript.py
             run_script_path = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "runScript.py"
             )
@@ -383,18 +360,18 @@ class Bridge(QObject):
             error_response = {
                 "status": "error",
                 "message": str(e),
-                "stacktrace": traceback.format_exc(),  # 添加堆栈跟踪
+                "stacktrace": traceback.format_exc(),
             }
             self.dock_event.emit("scriptError", json.dumps(error_response))
 
     @pyqtSlot(str)
-    def sceneSave(self, data):
+    def scene_save(self, data):
         try:
             scene_data = json.loads(data)
             file_handler = FileHandler()
 
-            content = json.dumps(scene_data,indent=4)
-            save_path = file_handler.save_file(content,"保存场景文件","场景文件 (*.json)")
+            content = json.dumps(scene_data, indent=4)
+            save_path = file_handler.save_file(content, "保存场景文件", "场景文件 (*.json)")
             if save_path:
                 print(f"[DEBUG] 场景保存成功: {save_path}")
                 self.dock_event.emit(
@@ -414,10 +391,10 @@ class Bridge(QObject):
             self.dock_event.emit("sceneError", json.dumps(error_response))
 
     @pyqtSlot()
-    def closeprocess(self):
+    def close_process(self):
         QApplication.quit()
         os._exit(0)
 
     @pyqtSlot(str, str)
-    def forwardDockEvent(self, event_type, event_data):
+    def forward_dock_event(self, event_type, event_data):
         self.dock_event.emit(event_type, event_data)

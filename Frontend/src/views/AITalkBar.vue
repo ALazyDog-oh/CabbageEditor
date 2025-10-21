@@ -79,7 +79,7 @@ const userInput = ref('');
 const SendMessageToAI = (query) => {
   if (window.pyBridge) {
     const testStr = JSON.stringify({ message: query });
-    window.pyBridge.sendMessageToAI(testStr);
+    window.pyBridge.send_message_to_ai(testStr);
   } else {
     console.error("Python SendMessageToDock 未连接！");
   }
@@ -124,7 +124,7 @@ window.receiveAIMessage = (data) => {
 //关闭浮动窗口
 const closeFloat = () => {
   if (window.pyBridge) {
-    window.pyBridge.removeDockWidget("AITalkBar");
+    window.pyBridge.remove_dock_widget("AITalkBar");
   }
 };
 /*

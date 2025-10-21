@@ -34,7 +34,6 @@
 <script setup>
     import { ref, onMounted, onUnmounted } from 'vue';
     import { useDragResize } from '@/composables/useDragResize';
-    import eventBus from '@/utils/eventBus';
     import { useRouter } from 'vue-router';
 
     const router = useRouter();
@@ -46,19 +45,27 @@
 
     const closeDock = () => {
     if (window.pyBridge) {
-        window.pyBridge.removeDockWidget("SetUp");
+        window.pyBridge.remove_dock_widget("SetUp");
     }
     };
 
+    // 避免连接/断开 dock_event 时引用未定义
+    const handleDockEvent = (event_type, event_data) => {
+      try {
+        // 可按需处理 SetUp 的 dock 事件，这里默认忽略
+        return;
+      } catch (_) {}
+    };
+
     const Archive = () => {
-    if (window.pyBridge && window.pyBridge.sceneSave) {
+    if (window.pyBridge && window.pyBridge.scene_save) {
       const sceneData = {
         actors: sceneImages.value.map(scene => ({
           name: scene.name,
           path: scene.path,
         }))
       };
-      window.pyBridge.sceneSave(JSON.stringify(sceneData));
+      window.pyBridge.scene_save(JSON.stringify(sceneData));
     };
 
     try {
@@ -80,14 +87,13 @@
     const existingSaves = JSON.parse(localStorage.getItem('archives') || '[]');
     existingSaves.unshift(newArchive);
     localStorage.setItem('archives', JSON.stringify(existingSaves));
-    eventBus.emit('archives-updated');
     
         window.pyBridge.send_message_to_main("go_home", "");
-        window.pyBridge.removeDockWidget("Pet");
-        window.pyBridge.removeDockWidget("AITalkBar");
-        window.pyBridge.removeDockWidget("Object");
-        window.pyBridge.removeDockWidget("SceneBar");
-        window.pyBridge.removeDockWidget("SetUp");
+        window.pyBridge.remove_dock_widget("Pet");
+        window.pyBridge.remove_dock_widget("AITalkBar");
+        window.pyBridge.remove_dock_widget("Object");
+        window.pyBridge.remove_dock_widget("SceneBar");
+        window.pyBridge.remove_dock_widget("SetUp");
     }catch (error) {
     console.error('存档失败:', error);
   }
@@ -128,16 +134,16 @@
 
     const goWelcome = () => {
       window.pyBridge.send_message_to_main("go_home", "");
-      window.pyBridge.removeDockWidget("Pet");
-      window.pyBridge.removeDockWidget("AITalkBar");
-      window.pyBridge.removeDockWidget("Object");
-      window.pyBridge.removeDockWidget("SceneBar");
-      window.pyBridge.removeDockWidget("SetUp");
+      window.pyBridge.remove_dock_widget("Pet");
+      window.pyBridge.remove_dock_widget("AITalkBar");
+      window.pyBridge.remove_dock_widget("Object");
+      window.pyBridge.remove_dock_widget("SceneBar");
+      window.pyBridge.remove_dock_widget("SetUp");
     };
 
     const Out = () => {
     if (window.pyBridge) {
-        window.pyBridge.closeprocess();
+        window.pyBridge.close_process();
     } else {
         console.error("Python SendMessageToDock 未连接！");
     }
@@ -153,7 +159,7 @@
 
     onUnmounted(() => {
     if (window.pyBridge) {
-      window.pyBridge.dockEvent.disconnect(handleDockEvent);
+      window.pyBridge.dock_event.disconnect(handleDockEvent);
     };
   });
 </script>

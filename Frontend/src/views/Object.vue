@@ -3,7 +3,6 @@
   <div class="titlebar flex items-center w-full p-2 justify-between bg-[#84A65B] cursor-move select-none"
     @mousedown="startDrag" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag" @dblclick="handleDoubleClick">
     <div class="text-white font-medium w-auto whitespace-nowrap">角色</div>
-    <!-- 按钮组 -->
     <div class="flex w-full space-x-2 justify-end">
       <button @click="exportCode"
         class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded transition-colors duration-200">
@@ -16,14 +15,12 @@
     </div>
   </div>
   <div class="w-full bg-[#a8a4a3]/65 flex flex-col" style="height: calc(100vh - 56px);">
-    <!-- 角色输入框 -->
     <div class="flex items-center space-x-2 mb-4">
       <label class="text-gray-600">角色</label>
       <input type="text" placeholder="角色路径"
         class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" v-model="character" />
     </div>
 
-    <!-- 坐标调整 -->
     <div class="flex items-center justify-between space-x-4 mb-4">
       <label class="text-write whitespace-nowrap">坐标：</label>
       <label class="text-write">x</label>
@@ -75,7 +72,6 @@
       <div id="blockdiv" class="blockly-container"></div>
     </div>
   </div>
-    <!-- 四周拖动边框 -->
     <div class="absolute top-0 left-0 w-full h-2 cursor-n-resize z-40" @mousedown="(e) => startResize(e, 'n')"></div>
     <div class="absolute bottom-0 left-0 w-full h-2 cursor-s-resize z-40" @mousedown="(e) => startResize(e, 's')"></div>
     <div class="absolute top-0 left-0 h-full w-2 cursor-w-resize z-40" @mousedown="(e) => startResize(e, 'w')"></div>
@@ -85,7 +81,7 @@
     <div class="absolute bottom-0 left-0 w-4 h-4 cursor-sw-resize z-40" @mousedown="(e) => startResize(e, 'sw')"></div>
     <div class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-40" @mousedown="(e) => startResize(e, 'se')"></div>
   </div>
-    <div v-if="showExportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" v-if="showExportModal">
     <div class="bg-white rounded-lg p-6 w-[70%] max-w-2xl mx-auto">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold">导出代码</h3>
@@ -156,9 +152,7 @@ import { defineListGenerators } from '@/blockly/generators/list.js';
 import { BLOCK_CATEGORY_MAP } from '@/blockly/configs/categoryMap.js';
 import { WORKSPACE_CONFIG } from '@/blockly/configs/workspaceConfig.js';
 
-// 定义响应式的广播列表，初始为空
 const broadcastList = ref([]);
-// 新建广播的函数
 const createNewBroadcast = () => {
   const newBroadcastName = prompt('请输入新广播的名称：');
   if (newBroadcastName && newBroadcastName.trim() !== '') {
@@ -297,7 +291,7 @@ const initBlockly = () => {
       weight: 1
     });
     Blockly.ContextMenuRegistry.registry.register({
-      displayText: '载入工作区',
+      displayText: '加载工作区',
       preconditionFn: () => 'enabled',
       callback: async () => {
         await loadWorkspaceFromFile();
@@ -315,7 +309,7 @@ const initBlockly = () => {
           const code = pythonGenerator.workspaceToCode(workspace.value);
           console.log(code);
           if (window.pyBridge) {
-              window.pyBridge.executePythonCode(code,actorname.value);
+              window.pyBridge.execute_python_code(code,actorname.value);
           }
       },
       scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
@@ -338,25 +332,19 @@ const initBlockly = () => {
         if (event.type === Blockly.Events.BLOCK_CREATE) {
           handleBlockCreate(event);
         }
-        // 增加删除块事件健壮性处理
         if (event.type === Blockly.Events.BLOCK_DELETE) {
-          // 中文注释：删除块时可做自定义处理，确保 blockId 存在
           if (event.blockId) {
             const block = workspace.value.getBlockById(event.blockId);
             if (block) {
-              // 可在此处添加自定义删除逻辑
-              // console.log('删除块:', block.type);
             }
           }
         }
-        // 可扩展其它事件类型
       } catch (err) {
-        // 中文注释：捕获并输出所有事件监听异常，避免未处理错误
         console.error('Blockly 事件监听异常:', err);
       }
     });
   } catch (err) {
-    console.error('initBlockly 初始化异常:', err);
+    console.error('Object.vue mounted 初始化异常:', err);
   }
 };
 
@@ -370,26 +358,19 @@ const setupBlockListener = () => {
       if (event.type === Blockly.Events.BLOCK_CREATE) {
         handleBlockCreate(event);
       }
-      // 增加删除块事件健壮性处理
       if (event.type === Blockly.Events.BLOCK_DELETE) {
-        // 中文注释：删除块时可做自定义处理，确保 blockId 存在
         if (event.blockId) {
           const block = workspace.value.getBlockById(event.blockId);
           if (block) {
-            // 可在此处添加自定义删除逻辑
-            // console.log('删除块:', block.type);
           }
         }
       }
-      // 可扩展其它事件类型
     } catch (err) {
-      // 中文注释：捕获并输出所有事件监听异常，避免未处理错误
       console.error('Blockly 事件监听异常:', err);
     }
   });
 };
 
-// 处理块创建事件
 const handleBlockCreate = (event) => {
   if (!workspace.value) {
     console.error('handleBlockCreate: workspace 未初始化');
@@ -413,7 +394,7 @@ const handleBlockCreate = (event) => {
 
 const updatePosition = () => {
   if (window.pyBridge) {
-    window.pyBridge.actorOperation(JSON.stringify({
+    window.pyBridge.actor_operation(JSON.stringify({
       Operation: "Move",
       sceneName: scenename.value,
       x: parseFloat(px.value),
@@ -421,13 +402,13 @@ const updatePosition = () => {
       z: parseFloat(pz.value),
       actorName: actorname.value
     }));
-    console.error('updatePosition', actorname.value, px.value, py.value, pz.value); // 调试用，确保值正确传递到 Python 端
-  } 
+    console.error('updatePosition', actorname.value, px.value, py.value, pz.value);
+  }
 }
 
 const updateRotation = () => {
   if (window.pyBridge) {
-    window.pyBridge.actorOperation(JSON.stringify({
+    window.pyBridge.actor_operation(JSON.stringify({
       Operation: "Rotate",
       sceneName: scenename.value,
       x: parseFloat(rx.value),
@@ -435,13 +416,13 @@ const updateRotation = () => {
       z: parseFloat(rz.value),
       actorName: actorname.value
     }));
-    console.error('updateRotation', rx.value, ry.value, rz.value); // 调试用，确保值正确传递到 Python 端
+    console.error('updateRotation', rx.value, ry.value, rz.value);
   }
 }
 
 const updateScale = () => {
   if (window.pyBridge) {
-    window.pyBridge.actorOperation(JSON.stringify({
+    window.pyBridge.actor_operation(JSON.stringify({
       Operation: "Scale",
       sceneName: scenename.value,
       x: parseFloat(sx.value),
@@ -449,14 +430,13 @@ const updateScale = () => {
       z: parseFloat(sz.value),
       actorName: actorname.value
     }));
-    console.error('updateScale', sx.value, sy.value, sz.value); // 调试用，确保���正确传递到 Python 端
+    console.error('updateScale', sx.value, sy.value, sz.value);
   }
 }
 
-//关闭浮动窗口
 const closeFloat = () => {
   if (window.pyBridge) {
-    window.pyBridge.removeDockWidget(routename.value);
+    window.pyBridge.remove_dock_widget(routename.value);
   }
 };
 
@@ -468,11 +448,8 @@ const handleResizeUp = () => {
   if (dragState.value.isResizing) stopResize();
 };
 
-// 全局 ESC 已在 InputEventBridge 中处理，这里不再重复监听，避免阻止输入行为
-
 const exportCode = () => {
   try {
-    // 生成Blockly代码
     const code = pythonGenerator.workspaceToCode(workspace.value);
     if (!code) {
       alert('没有可导出的代码');
@@ -498,14 +475,11 @@ const copyToClipboard = async () => {
 
 onMounted(() => {
   try {
-    // 1. 路由参数健壮性处理
     scenename.value = route.query.sceneName || '';
     actorname.value = route.query.objectName || '';
     character.value = decodeURIComponent(route.query.path || '');
     routename.value = route.query.routename || '';
-    // 2. 初始化 Blockly，加异常处理
     initBlockly();
-    // 3. 事件监听方法健壮性检查
     if (typeof handleResizeMove === 'function') {
       document.addEventListener('mousemove', handleResizeMove);
     }
@@ -518,22 +492,16 @@ onMounted(() => {
     if (typeof stopDrag === 'function') {
       document.addEventListener('mouseup', stopDrag);
     }
-    // 全局 ESC 已在 InputEventBridge 中处理，这里不再重复监听，避免阻止输入行为
   } catch (err) {
-    // 中文注释：捕获并输出所有初始化异常，便于调试
     console.error('Object.vue mounted 初始化异常:', err);
   }
 });
 
-// 组件卸载时清理
 onUnmounted(() => {
-  // 这里假设 closeWorkspace 是一个自定义函数，需要根据实际情况实现
-  // closeWorkspace();
   document.removeEventListener('mousemove', handleResizeMove);
   document.removeEventListener('mouseup', handleResizeUp);
   document.removeEventListener('mousemove', onDrag);
   document.removeEventListener('mouseup', stopDrag);
-  // 不再移除 keydown 监听（未添加）
 });
 </script>
 

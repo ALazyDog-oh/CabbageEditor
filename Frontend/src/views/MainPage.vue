@@ -80,10 +80,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, reactive, watch } from 'vue';
+import { ref, onMounted, onUnmounted, reactive, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import "@/assets/welcome-page.css";
-import eventBus from '@/utils/eventBus';
 
 const router = useRouter();
 
@@ -91,14 +90,14 @@ const goToHome = () => {
   if (window.pyBridge) {
     tabs.value.forEach(tab => {
       if (tab && tab.id) {
-        window.pyBridge.removeDockWidget(tab.id);
+        window.pyBridge.remove_dock_widget(tab.id);
       }
     });
-    window.pyBridge.removeDockWidget("Pet");
-    window.pyBridge.removeDockWidget("AITalkBar");
-    window.pyBridge.removeDockWidget("Object");
-    window.pyBridge.removeDockWidget("SceneBar");
-    window.pyBridge.removeDockWidget("SetUp");
+    window.pyBridge.remove_dock_widget("Pet");
+    window.pyBridge.remove_dock_widget("AITalkBar");
+    window.pyBridge.remove_dock_widget("Object");
+    window.pyBridge.remove_dock_widget("SceneBar");
+    window.pyBridge.remove_dock_widget("SetUp");
   }
   router.push('/');
 };
@@ -253,7 +252,7 @@ const handleCameraMove = (direction) => {
   }
 
   if (window.pyBridge) {
-    window.pyBridge.cameraMove(JSON.stringify({
+    window.pyBridge.camera_move(JSON.stringify({
       sceneName: tabs.value[activeTab.value]?.id || 'scene1',
       position: [...position],
       forward: [...forward],
@@ -268,9 +267,9 @@ const closeTab = (index) => {
   if (tabs.value.length > 1) {
     const closedTab = tabs.value[index];
     if (window.pyBridge) {
-      window.pyBridge.removeDockWidget("AITalkBar");
-      window.pyBridge.removeDockWidget("Object");
-      window.pyBridge.removeDockWidget("SceneBar");
+      window.pyBridge.remove_dock_widget("AITalkBar");
+      window.pyBridge.remove_dock_widget("Object");
+      window.pyBridge.remove_dock_widget("SceneBar");
     }
 
     tabs.value.splice(index, 1);
@@ -296,7 +295,7 @@ const handleReturnToWelcome = () => {
 const cabbagetalk = () => {
   const size = { width: 160, height: 160};
   if (window.pyBridge) {
-    window.pyBridge.addDockWidget("Pet", "/Pet", "float", "bottom_right", JSON.stringify(size));
+    window.pyBridge.add_dock_widget("Pet", "/Pet", "float", "bottom_right", JSON.stringify(size));
   }
 };
 
@@ -304,13 +303,13 @@ const cabbagetalk = () => {
 const openSceneBar = (index) => {
   if (window.pyBridge) {
     const sceneName = tabs.value[index]?.id || 'scene1';
-    window.pyBridge.addDockWidget("SceneBar", `/SceneBar?sceneName=${sceneName}`, "left");
+    window.pyBridge.add_dock_widget("SceneBar", `/SceneBar?sceneName=${sceneName}`, "left");
   }
 };
 
 const Out = () => {
     if (window.pyBridge) {
-        window.pyBridge.closeprocess();
+        window.pyBridge.close_process();
     } else {
         console.error("Python SendMessageToDock 未连接！");
     }
@@ -318,7 +317,7 @@ const Out = () => {
 
 const createScene = () => {
   if (window.pyBridge) {
-    window.pyBridge.createScene(JSON.stringify({sceneName:"scene1"}));
+    window.pyBridge.create_scene(JSON.stringify({sceneName:"scene1"}));
   }
 };
 

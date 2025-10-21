@@ -123,8 +123,6 @@
 import { ref, onMounted, onBeforeUnmount, onUnmounted, provide } from 'vue';
 import '@/assets/welcome-page.css'
 import { useRouter } from 'vue-router';
-import eventBus from '@/utils/eventBus';
-
 // 控制公告显示的状态
 const currentScene = ref("mainscene");
 const showAnnouncements = ref(false);
@@ -167,8 +165,8 @@ onBeforeUnmount(() => {
 
 const createActor = () => {
     if (window.pyBridge) {
-        window.pyBridge.createActor(currentScene.value,`./Resource/Cabbage/armadillo.obj`);
-        window.pyBridge.createActor(currentScene.value,`./Resource/Cabbage/Ball.obj`);
+        window.pyBridge.create_actor(currentScene.value,`./Resource/Cabbage/armadillo.obj`);
+        window.pyBridge.create_actor(currentScene.value,`./Resource/Cabbage/Ball.obj`);
     } else {
         console.error("Python SendMessageToDock 未连接！");
     }
@@ -198,7 +196,7 @@ const handleActorMove = (direction, deltaTime = 16) => {
     case 'rotateRight':
       // 新增右旋转逻辑
       if (window.pyBridge) {
-        window.pyBridge.actorOperation(JSON.stringify({
+        window.pyBridge.actor_operation(JSON.stringify({
           Operation: "Rotate",
           sceneName: "mainscene",
           x: 0,
@@ -211,7 +209,7 @@ const handleActorMove = (direction, deltaTime = 16) => {
     case 'rotateLeft':
       // 新增左旋转逻辑
       if (window.pyBridge) {
-        window.pyBridge.actorOperation(JSON.stringify({
+        window.pyBridge.actor_operation(JSON.stringify({
           Operation: "Rotate",
           sceneName: "mainscene",
           x: 0,
@@ -236,7 +234,7 @@ const handleActorMove = (direction, deltaTime = 16) => {
   }
 
   if (window.pyBridge) {
-    window.pyBridge.actorOperation(JSON.stringify({
+    window.pyBridge.actor_operation(JSON.stringify({
       Operation: "Move",
       sceneName: "mainscene",
       x: x,
@@ -293,13 +291,13 @@ const handleVersionSelect = (version) => {
 const openSetup = (index) => {
   const size = { width: 600, height:320 };
   if (window.pyBridge) {
-  window.pyBridge.addDockWidget("SetUp", "/SetUp", "float", "center", JSON.stringify(size));
+  window.pyBridge.add_dock_widget("SetUp", "/SetUp", "float", "center", JSON.stringify(size));
   }
 };
 
 const Out = () => {
     if (window.pyBridge) {
-        window.pyBridge.closeprocess();
+        window.pyBridge.close_process();
     } else {
         console.error("Python SendMessageToDock 未连接！");
     }
@@ -307,7 +305,7 @@ const Out = () => {
 
 const removeActors = () => {
     if (window.pyBridge) {
-        window.pyBridge.removeActor();
+        window.pyBridge.remove_actor();
     } else {
         console.error("Python SendMessageToDock 未连接！");
     }
@@ -334,10 +332,10 @@ const loadSave = (save) => {
     
     if (target && window.pyBridge) {
       // 清空场景
-      window.pyBridge.removeActor();
+      window.pyBridge.remove_actor();
       // 加载存档
       target.sceneData.forEach(actor => {
-        window.pyBridge.createActor(currentScene.value, actor.path);
+        window.pyBridge.create_actor(currentScene.value, actor.path);
       });
       
       router.push('/MainPage');
@@ -349,7 +347,6 @@ const loadSave = (save) => {
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown);
-  eventBus.on('version-selected', handleVersionSelect);
   loadArchives();
   eventBus.on('archives-updated', loadArchives);
 });

@@ -52,7 +52,7 @@ const onDrag = (event) => {
   const deltaY = event.clientY - dragState.value.startY;
   
   if (window.pyBridge) {
-    window.pyBridge.forwardDockEvent('drag', JSON.stringify({
+    window.pyBridge.forward_dock_event('drag', JSON.stringify({
       deltaX,
       deltaY
     }));
@@ -115,7 +115,7 @@ const closeContextMenu = () => {
 // 打开AI对话栏
 const controlAITalkBar = () => {
   if (window.pyBridge) {
-    window.pyBridge.addDockWidget("AITalkBar", "/AITalkBar", "left");
+    window.pyBridge.add_dock_widget("AITalkBar", "/AITalkBar", "left");
   }
 };
 
