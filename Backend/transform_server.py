@@ -5,7 +5,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import Dict, Any, AsyncIterator
 # from QtWindow import Bridge, scene_dict
-from utils.Bridge import Bridge
+from utils.bridge import Bridge
 # print(QtWindow.__file__)
 # print(dir(QtWindow))
 

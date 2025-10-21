@@ -8,7 +8,7 @@ import './blockly/generators/index.js'
 let pyBridge;
 if (typeof QWebChannel !== 'undefined' && typeof qt !== 'undefined') {
     new QWebChannel(qt.webChannelTransport, (channel) => {
-        pyBridge = channel.objects.pyBridge
+        pyBridge = channel.objects.pybridge
         window.pyBridge = pyBridge
     })
 }

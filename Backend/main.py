@@ -12,7 +12,7 @@ os.environ["QT_QPA_PLATFORM"] = "windows"
 
 _cleaned_up = False
 
-from ui import MainWindow
+from ui import main_window
 
 msg_queue = queue.Queue()
 
@@ -63,7 +63,7 @@ def run(isReload):
     if not msg_queue.empty():
         print(msg_queue.get())
 
-    MainWindow.app.processEvents()
+    main_window.app.processEvents()
 
 
 def put_queue(msg):
@@ -78,4 +78,4 @@ if __name__ == '__main__':
             runScript = importlib.util.module_from_spec(runscript_spec)
             runscript_spec.loader.exec_module(runScript)
             runScript.run()
-        MainWindow.app.processEvents()
+        main_window.app.processEvents()
