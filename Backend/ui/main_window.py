@@ -73,7 +73,8 @@ class MainWindow(QMainWindow):
         os._exit(0)
     
     def resizeEvent(self,event) -> None:
-        self.osd.resize(self.size())
+        if getattr(self, "osd", None) is not None:
+            self.osd.resize(self.size())
         super().resizeEvent(event)
 
     def configure_web_engine(self) -> None:
