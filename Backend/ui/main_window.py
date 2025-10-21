@@ -5,29 +5,29 @@ from PyQt6.QtCore import Qt, QPoint, QEvent
 from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEngineSettings
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QMainWindow, QApplication, QDockWidget
-from ui.browser_widget import browser_widget
-from ui.custom_window import custom_window
-from ui.render_widget import render_widget
+from ui.browser_widget import BrowserWidget
+from ui.custom_window import CustomWindow
+from ui.render_widget import RenderWidget
 from utils.static_components import scene_dict, url
 
 
-class main_window(QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self):
         self.osd = None
-        super(main_window, self).__init__()
+        super(MainWindow, self).__init__()
         screen = QApplication.primaryScreen().availableGeometry()
         self.setGeometry(0, 0, screen.width(), screen.height())
         self.setWindowTitle("CoronaEngine")
         self.configure_web_engine()
 
-        self.render_widget = render_widget(self, scene_dict)
+        self.render_widget = RenderWidget(self, scene_dict)
         self.setCentralWidget(self.render_widget)
 
-        self.osd = custom_window(self)
+        self.osd = CustomWindow(self)
         self.osd.resize(self.size())
         self.osd.move(self.geometry().x(), self.geometry().y())
 
-        self.browser_widget = browser_widget(self.osd, url)
+        self.browser_widget = BrowserWidget(self.osd, url)
         self.osd.setCentralWidget(self.browser_widget)
 
         self.osd.show()
@@ -64,7 +64,7 @@ class main_window(QMainWindow):
         if self.browser_widget:
             self.browser_widget.setParent(None)
         # 重新创建并挂载到 OSD 窗口
-        self.browser_widget = browser_widget(self.osd, url)
+        self.browser_widget = BrowserWidget(self.osd, url)
         self.osd.setCentralWidget(self.browser_widget)
 
     def closeEvent(self, event) -> None:
@@ -89,5 +89,5 @@ class main_window(QMainWindow):
             pass
 
 app = QApplication(sys.argv)
-window = main_window()
+window = MainWindow()
 window.show()

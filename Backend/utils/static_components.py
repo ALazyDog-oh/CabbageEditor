@@ -11,7 +11,7 @@ try:
     print("[StaticComponents] import CoronaEngine")
 except ImportError:
     try:
-        from CoronaEngineFallback import CoronaEngine  # type: ignore
+        from corona_engine_fallback import CoronaEngine  # type: ignore
         print("[StaticComponents] import CoronaEngineFallback")
     except ImportError:
         print("[StaticComponents] CoronaEngine 未找到 (需要 -DBUILD_CORONA_EDITOR=ON)")

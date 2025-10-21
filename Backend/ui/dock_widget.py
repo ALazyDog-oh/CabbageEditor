@@ -5,12 +5,12 @@ from PyQt6.QtGui import QColor
 from PyQt6.QtWebChannel import QWebChannel
 from PyQt6.QtWidgets import QDockWidget, QWidget
 from utils.bridge import get_bridge
-from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEnginePage
+from PyQt6.QtWebEngineCore import QWebEngineProfile, QWebEnginePage, QWebEngineSettings
 
 
-class AddDock(QDockWidget):
+class RouteDockWidget(QDockWidget):
     def __init__(self, browser, name: str, path: str, CentralManager, Main_Window, isFloat: bool):
-        super(AddDock, self).__init__(name, Main_Window)
+        super(RouteDockWidget, self).__init__(name, Main_Window)
         self.Main_Window = Main_Window
         self.max_width = int(Main_Window.width() * 0.3)
         self.min_height = int(Main_Window.height() * 0.5)
@@ -50,15 +50,28 @@ class AddDock(QDockWidget):
         try:
             self.profile = QWebEngineProfile(self)
             # use ephemeral storage and no cache to minimize accumulation
-            self.profile.setOffTheRecord(True)
             try:
+                # set off the record if available
+                if hasattr(self.profile, "setOffTheRecord"):
+                    self.profile.setOffTheRecord(True)
                 self.profile.setHttpCacheType(QWebEngineProfile.HttpCacheType.MemoryHttpCache)
                 self.profile.setHttpCacheMaximumSize(0)
                 self.profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.NoPersistentCookies)
+                # Hide native scrollbars at engine level
+                try:
+                    settings = self.profile.settings()
+                    settings.setAttribute(QWebEngineSettings.WebAttribute.ShowScrollBars, False)
+                except Exception:
+                    pass
             except Exception:
                 pass
             page = QWebEnginePage(self.profile, self.browser)
             self.browser.setPage(page)
+            # Ensure transparent background on the custom page
+            try:
+                page.setBackgroundColor(QColor(Qt.GlobalColor.transparent))
+            except Exception:
+                pass
         except Exception:
             self.profile = None
         self.browser.load(self.url)
@@ -200,7 +213,7 @@ class AddDock(QDockWidget):
             # Unregister and release webchannel resources
             try:
                 if hasattr(self, "channel") and self.channel:
-                    self.channel.deregisterObject("pybridge")
+                    self.channel.deregisterObject(self.bridge)
             except Exception:
                 pass
             try:
@@ -243,9 +256,9 @@ class AddDock(QDockWidget):
             print(f"关闭事件处理异常: {str(e)}")
         super().closeEvent(event)
 
-class RemoveDock(QWidget):
+class DockCleanupWidget(QWidget):
     def __init__(self, browser, name, central_manager):
-        super(RemoveDock, self).__init__()
+        super(DockCleanupWidget, self).__init__()
         self.centralmanager = central_manager
         self.browser = browser
         dock = self.centralmanager.docks.get(name)

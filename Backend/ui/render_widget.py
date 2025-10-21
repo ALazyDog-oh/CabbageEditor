@@ -6,11 +6,11 @@ from PyQt6.QtGui import QPainter, QPixmap
 from PyQt6.QtWidgets import QWidget
 
 
-class render_widget(QWidget):
+class RenderWidget(QWidget):
     geometry_changed = pyqtSignal(QRect)
 
     def __init__(self, Main_Window, scene_dict: Dict[str, Dict[str, Any]]):
-        super(render_widget, self).__init__()
+        super(RenderWidget, self).__init__()
         self.Main_Window = Main_Window
 
         self.setGeometry(0, 0, self.Main_Window.width(), self.Main_Window.height())

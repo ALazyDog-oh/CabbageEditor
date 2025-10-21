@@ -16,7 +16,7 @@ except ImportError:
     from corona_engine_fallback import CoronaEngine
 
 # --- Singleton accessor for Bridge ---
-_bridge_singleton = None  # type: bridge | None
+_bridge_singleton = None  # type: Bridge | None
 
 def get_bridge(central_manager=None):
     """Return the global Bridge singleton instance.
@@ -27,7 +27,7 @@ def get_bridge(central_manager=None):
     global _bridge_singleton
     if _bridge_singleton is None:
         # Delay import type hint to avoid NameError before class definition
-        instance = bridge(central_manager)
+        instance = Bridge(central_manager)
         _bridge_singleton = instance
     else:
         if central_manager is not None and getattr(_bridge_singleton, "central_manager", None) is None:
@@ -54,7 +54,7 @@ class WorkerThread(QThread):
             self.finished.emit()
 
 
-class bridge(QObject):
+class Bridge(QObject):
     create_route = pyqtSignal(str, str, str, str, object)
     ai_message = pyqtSignal(str)
     remove_route = pyqtSignal(str)

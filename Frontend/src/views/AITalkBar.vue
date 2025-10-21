@@ -25,11 +25,11 @@
     <div class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-40" @mousedown="(e) => startResize(e, 'se')"></div>
 
     <!-- 主内容区域 -->
-    <div class="flex flex-col h-screen bg-[#a8a4a3]/65 pt-12">
+    <div class="flex flex-col h-screen overflow-hidden bg-[#a8a4a3]/65 pt-12">
       <!-- 对话记录区域 -->
       <div class="flex-1 overflow-hidden">
         <div class="h-full max-w-6xl mx-auto p-6">
-          <div class="h-full overflow-y-auto space-y-2 pr-2">
+          <div class="h-full overflow-y-auto no-scrollbar space-y-2 pr-2">
             <div v-for="(message, index) in messages" :key="index"
               class="p-3 bg-[#E8E8E8]/80 rounded-lg shadow-sm border border-gray-100">
               <span :class="{

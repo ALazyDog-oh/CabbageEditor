@@ -1,20 +1,21 @@
 import json
 
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import Qt, QPoint, QUrl
 from PyQt6.QtGui import QColor, QGuiApplication
 from PyQt6.QtWebChannel import QWebChannel
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-from ui.dock_widget import AddDock, RemoveDock
+from ui.dock_widget import RouteDockWidget, DockCleanupWidget
 from utils.bridge import get_bridge
 from utils.central_manager import CentralManager
 
 
-class browser_widget(QWebEngineView):
-    def __init__(self, Main_Window, url:str):
-        super(browser_widget, self).__init__(Main_Window)
+class BrowserWidget(QWebEngineView):
+    def __init__(self, Main_Window, url: QUrl):
+        super(BrowserWidget, self).__init__(Main_Window)
         self.Main_Window = Main_Window
         self.central_manager = CentralManager()
-        self.url = url
+        # normalize to QUrl
+        self.url = QUrl(url) if isinstance(url, str) else url
 
         self.setMinimumSize(1, 1)
         self.setStyleSheet("background: transparent;")
@@ -47,11 +48,11 @@ class browser_widget(QWebEngineView):
         dock_area, isFloat, pos = self.get_dock_area(position, floatposition)
 
         if self.central_manager.docks.get(routename):
-            self.Removedock_widget(routename)
+            self.RemoveDockWidget(routename)
             del self.central_manager.docks[routename]
             return
         try:
-            dock = AddDock(browser, routename, routepath, self.central_manager, self.Main_Window, isFloat)
+            dock = RouteDockWidget(browser, routename, routepath, self.central_manager, self.Main_Window, isFloat)
             # With a global singleton bridge, main connections are already set in connect_signals.
             # Avoid duplicating connections here to prevent multiple slot invocations.
             if isFloat:
@@ -73,7 +74,7 @@ class browser_widget(QWebEngineView):
         dock = self.central_manager.docks.get(routename)
         if dock:
             self.Main_Window.removeDockWidget(dock)
-            RemoveDock(browser, routename, self.central_manager)
+            DockCleanupWidget(browser, routename, self.central_manager)
 
     def get_dock_area(self, position, floatposition):
         position_map = {
@@ -119,11 +120,11 @@ class browser_widget(QWebEngineView):
         try:
             # Disconnect signals to this BrowserWidget (auto-disconnect happens on QObject dtor, but we ensure it)
             try:
-                self.bridge.create_route.disconnect(self.AddDockWidget())
+                self.bridge.create_route.disconnect(self.AddDockWidget)
             except Exception:
                 pass
             try:
-                self.bridge.remove_route.disconnect(self.RemoveDockWidget())
+                self.bridge.remove_route.disconnect(self.RemoveDockWidget)
             except Exception:
                 pass
             try:
@@ -133,7 +134,7 @@ class browser_widget(QWebEngineView):
             # Unhook WebChannel and deregister object
             try:
                 if hasattr(self, "channel") and self.channel:
-                    self.channel.deregisterObject("pybridge")
+                    self.channel.deregisterObject(self.bridge)
             except Exception:
                 pass
             try:
