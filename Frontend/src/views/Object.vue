@@ -15,8 +15,8 @@
     </div>
   </div>
   <div class="w-full bg-[#a8a4a3]/65 flex flex-col" style="height: calc(100vh - 56px);">
-    <div v-show="currentPage === 1" class="h-full overflow-y-auto">
-    <div class="flex items-center space-x-2 mb-4">
+    <div v-show="currentPage === 1" class="h-full overflow-y-auto p-2 space-y-4">
+    <div class="flex items-center space-x-2">
       <label class="text-gray-600">角色</label>
       <input type="text" placeholder="角色路径"
         class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" v-model="character" />
@@ -73,14 +73,21 @@
     <div v-show="currentPage === 2" class="flex-1 overflow-y-auto">
       <div id="blockdiv" class="blockly-container"></div>
     </div>
-    <div class="flex justify-end p-2">
+    <div class="fixed bottom-4 right-4 flex bg-gray-700/80 rounded-full shadow-lg">
         <button @click="prevPage" :disabled="currentPage === 1"
-          class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-l transition-colors duration-200 disabled:opacity-50">
-          &lt;
+          class="px-3 py-1 text-white hover:bg-gray-600/80 transition-colors duration-200 rounded-l-full disabled:opacity-50 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
         </button>
+        <div class="px-2 py-1 text-white text-sm flex items-center">
+          {{ currentPage }}/2
+        </div>
         <button @click="nextPage" :disabled="currentPage === 2"
-          class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-r transition-colors duration-200 disabled:opacity-50">
-          &gt;
+          class="px-3 py-1 text-white hover:bg-gray-600/80 transition-colors duration-200 rounded-r-full disabled:opacity-50 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
         </button>
     </div>
   </div>
