@@ -6,8 +6,7 @@ import { need } from './prelude'
 function indent(s) {
   if (!s) return ''
   s = String(s).replace(/^\s*\n+|\n+\s*$/g, '')
-  const pref = (pythonGenerator && pythonGenerator.INDENT) ? pythonGenerator.INDENT : '  '
-  return s.split('\n').map(l => (l ? pref + l : '')).join('\n') + (s ? '\n' : '')
+  return s.split('\n').map(l => (l ? '  ' + l : '')).join('\n') + (s ? '\n' : '')
 }
 
 export const defineEventGenerators = () => {
@@ -19,16 +18,8 @@ export const defineEventGenerators = () => {
     // 当使用键盘事件积木时，需要键盘前置片段
     need('keyboard')
     const key = block.getFieldValue('x') || ''
-    // 仅在存在 DO 输入时调用 statementToCode，避免 "Input \"DO\" doesn't exist" 的异常
-    let branch = ''
-    if (block.getInput && block.getInput('DO')) {
-      // statementToCode 可能返回空字符串
-      branch = pythonGenerator.statementToCode(block, 'DO') || ''
-    }
-    if (!branch) {
-      const indentUnit = (pythonGenerator && pythonGenerator.INDENT) ? pythonGenerator.INDENT : '  '
-      branch = indentUnit + 'pass\n'
-    }
+    let branch = pythonGenerator.statementToCode(block, 'DO');
+    if (!branch) branch = pythonGenerator.INDENT + 'pass\n';
     // 将该事件标记行输出到 handler 中（由 index.js 负责路由到 def handle）
     // 后续串联的语句将自动附加在本块之后，属于 handler 函数体
     return `if key == '${key}':\n` + indent(branch);

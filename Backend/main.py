@@ -12,8 +12,7 @@ os.environ["QT_QPA_PLATFORM"] = "windows"
 
 _cleaned_up = False
 
-# Import the ui module in snake_case while keeping alias 'MainWindow' for compatibility with .app usage
-from ui import main_window as MainWindow
+from ui import MainWindow
 
 msg_queue = queue.Queue()
 

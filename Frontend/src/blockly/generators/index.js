@@ -81,7 +81,7 @@ pythonGenerator.workspaceToCode = function customWorkspaceToCode(workspace) {
     'try:',
     '    import CoronaEngine',
     'except ImportError:',
-    '    from corona_engine_fallback import CoronaEngine',
+    '    from CoronaEngineFallback import CoronaEngine',
   ].join('\n')
 
   // 各位置前置片段（已去除尾部多余换行；此处不再额外添加空行）
