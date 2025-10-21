@@ -1,13 +1,20 @@
-from mcp.server.fastmcp import FastMCP, Context
+from mcp.server.fastmcp import FastMCP
 import logging
 import json
-import asyncio
 from contextlib import asynccontextmanager
 from typing import Dict, Any, AsyncIterator
-# from QtWindow import Bridge, scene_dict
-from utils.Bridge import Bridge
-# print(QtWindow.__file__)
-# print(dir(QtWindow))
+
+# Robust imports for package or script execution
+try:
+    from .utils.bridge import Bridge
+    from .utils.static_components import scene_dict
+except Exception:
+    try:
+        from utils.bridge import Bridge
+        from utils.static_components import scene_dict
+    except Exception:
+        from Backend.utils.bridge import Bridge
+        from Backend.utils.static_components import scene_dict
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -41,7 +48,12 @@ def call_actor_operation(scene_name: str, actor_name: str, operation: str, x: fl
         "y": y,
         "z": z
     })
-    qt_bridge.Actor_Operation(data)
+    # Bridge method is actorOperation (camelCase) in existing code; ensure calling the correct method
+    try:
+        qt_bridge.actorOperation(data)
+    except AttributeError:
+        # fallback to snake_case wrapper if available
+        qt_bridge.actor_operation(data)
     return f"Sent {operation}({x}, {y}, {z}) to actor '{actor_name}' in scene '{scene_name}'"
 
 @app.tool()
@@ -58,6 +70,8 @@ async def transform_actor(actor_name: str, operation: str, x: float, y: float, z
         scene_name: Name of the scene,默认为scene1
     """
     try:
+        if operation not in {"Move", "Rotate", "Scale"}:
+            return f"Error transforming actor: invalid operation '{operation}'"
         return call_actor_operation(scene_name, actor_name, operation, x, y, z)
 
     except Exception as e:
@@ -76,8 +90,8 @@ async def list_actors(scene_name: str) -> str:
     try:
         # 角色名称缓存列表（用于 get_actor_list 工具）
         actor_list = []
-        if scene_name in QtWindow.scene_dict:
-            actor_dict = QtWindow.scene_dict[scene_name]['actor_dict']
+        if scene_name in scene_dict:
+            actor_dict = scene_dict[scene_name].get('actor_dict', {})
             for actorname in actor_dict:
                 actor_list.append(actorname)
         return json.dumps({"scene": scene_name, "actors": actor_list}, indent=2)
