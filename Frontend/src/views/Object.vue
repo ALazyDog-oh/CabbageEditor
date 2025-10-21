@@ -15,6 +15,7 @@
     </div>
   </div>
   <div class="w-full bg-[#a8a4a3]/65 flex flex-col" style="height: calc(100vh - 56px);">
+    <div v-show="currentPage === 1" class="h-full overflow-y-auto">
     <div class="flex items-center space-x-2 mb-4">
       <label class="text-gray-600">角色</label>
       <input type="text" placeholder="角色路径"
@@ -67,11 +68,23 @@
       <input type="number" step="0.1" @change="updateScale" @input="e => sz = e.target.value"
         class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
         :value="sz" />
+      </div>
     </div>
-    <div class="flex-1 overflow-y-auto">
+    <div v-show="currentPage === 2" class="flex-1 overflow-y-auto">
       <div id="blockdiv" class="blockly-container"></div>
     </div>
+    <div class="flex justify-end p-2">
+        <button @click="prevPage" :disabled="currentPage === 1"
+          class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-l transition-colors duration-200 disabled:opacity-50">
+          &lt;
+        </button>
+        <button @click="nextPage" :disabled="currentPage === 2"
+          class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-r transition-colors duration-200 disabled:opacity-50">
+          &gt;
+        </button>
+    </div>
   </div>
+
     <div class="absolute top-0 left-0 w-full h-2 cursor-n-resize z-40" @mousedown="(e) => startResize(e, 'n')"></div>
     <div class="absolute bottom-0 left-0 w-full h-2 cursor-s-resize z-40" @mousedown="(e) => startResize(e, 's')"></div>
     <div class="absolute top-0 left-0 h-full w-2 cursor-w-resize z-40" @mousedown="(e) => startResize(e, 'w')"></div>
@@ -470,6 +483,18 @@ const copyToClipboard = async () => {
   } catch (err) {
     console.error('复制失败:', err);
     alert('复制失败');
+  }
+};
+// 分页相关代码
+const currentPage = ref(1);
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+const nextPage = () => {
+  if (currentPage.value < 2) {
+    currentPage.value++;
   }
 };
 
