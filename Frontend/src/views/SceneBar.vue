@@ -6,7 +6,7 @@
       <div class="text-white font-medium w-auto whitespace-nowrap">场景</div>
       <!-- 按钮组 -->
       <div class="flex w-full space-x-2 justify-end">
-        <button @click.stop="closeFloat"
+        <button @click.stop="CloseFloat"
           class="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
           ×
         </button>
@@ -25,40 +25,63 @@
 
     <!-- 主内容区域 -->
     <div class="p-4 shadow-md w-full bg-[#a8a4a3]/65 flex flex-col" style="height: calc(100vh - 56px);">
-      <div class="relative mb-4">
-        <button @click.stop="handleFileImport"
-          class="mr-4 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
-          导入模型
-        </button>
-        <button @click.stop="handleSceneImport"
-          class="mr-4 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
+      <div class="flex flex-wrap gap-2 mb-4">
+        <div class="relative">
+        <button @click.stop="ToggleModelDropdown"
+          class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200 flex items-center">
+            导入模型
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div v-if="ShowModelDropdown" 
+              v-click-outside="CloseModelDropdown"
+              class="absolute z-10 mt-1 w-40 bg-[#a8a4a3]/65 rounded-md shadow-lg">
+            <div class="py-1">
+              <button @click.stop="ImportLightSource"
+                class="block w-full px-4 py-2 text-sm text-white hover:bg-gray-600 hover:text-gray-900 text-left">
+                光源
+              </button>
+              <button @click.stop="ImportCamera"
+                class="block w-full px-4 py-2 text-sm text-white hover:bg-gray-600 hover:text-gray-900 text-left">
+                摄像头
+              </button>
+              <button @click.stop="HandleFileImport"
+                class="block w-full px-4 py-2 text-sm text-white hover:bg-gray-600 hover:text-gray-900 text-left">
+                自定义模型
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button @click.stop="HandleSceneImport"
+          class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
           导入场景
         </button>
-        <button @click.stop="saveScene"
-          class="mr-4 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
+        <button @click.stop="SaveScene"
+          class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
           保存场景
         </button>
         <button @click.stop="DayNightCycle"
-          class="mr-4 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
+          class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
           昼夜变换
         </button>
-      </div>
-      <div class="flex items-center justify-between space-x-4 mb-4">
+        </div>
+      <div class="flex items-center justify-between gap-2 mb-4">
         <label class="text-write whitespace-nowrap">光照方向：</label>
         <label class="text-write">x</label>
-        <input type="number" step="0.1" @change="updateSunPosition" @input="e => px = e.target.value"
+        <input type="number" step="0.1" @change="UpdateSunPosition" @input="e => px = e.target.value"
           class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
           :value="px" />
         <label class="text-write">y</label>
-        <input type="number" step="0.1" @change="updateSunPosition" @input="e => py = e.target.value"
+        <input type="number" step="0.1" @change="UpdateSunPosition" @input="e => py = e.target.value"
           class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
           :value="py" />
         <label class="text-write">z</label>
-        <input type="number" step="0.1" @change="updateSunPosition" @input="e => pz = e.target.value"
+        <input type="number" step="0.1" @change="UpdateSunPosition" @input="e => pz = e.target.value"
           class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
           :value="pz" />
       </div>
-
 
       <div class="flex-1 overflow-y-auto">
         <!-- 场景列表 - 瀑布流布局 -->
@@ -69,10 +92,10 @@
                 <div class="flex flex-col w-full">
                   <div class="flex items-center justify-between">
                     <span class="text-sm font-medium text-gray-900 truncate" :title="scene.name"
-                      @dblclick="controlObject(scene)">
+                      @dblclick="ControlObject(scene)">
                       {{ scene.name }}
                     </span>
-                    <button @click.stop="deleteActor(scene)" 
+                    <button @click.stop="DeleteActor(scene)" 
                       class="ml-2 w-4 h-4 flex items-center justify-center text-red-500 hover:text-red-700">
                       ×
                     </button>
@@ -86,10 +109,8 @@
           </div>
         </div>
       </div>
-
     </div>
-
-  </div>
+    </div>
 </template>
 
 <script setup>
@@ -104,14 +125,14 @@ const currentSceneName = ref('');
 const px=ref('1.0'), py=ref('1.0'), pz=ref('1.0');
 
 
-const controlObject = (scene) => {
+const ControlObject = (scene) => {
   if (window.pyBridge) {
     const widgetName = `Object_${scene.name}`;
     window.pyBridge.add_dock_widget(widgetName, `/Object?sceneName=${currentSceneName.value}&objectName=${scene.name}&path=${encodeURIComponent(scene.path)}&routename=${widgetName}`, "right");
   }
 };
 
-const updateSunPosition = () => {
+const UpdateSunPosition = () => {
   if (window.pyBridge) {
     window.pyBridge.sun_direction(JSON.stringify({
       sceneName: currentSceneName.value,
@@ -123,7 +144,7 @@ const updateSunPosition = () => {
   } 
 }
 
-const saveScene = () => {
+const SaveScene = () => {
   if (window.pyBridge && window.pyBridge.scene_save) {
     const sceneData = {
       actors: sceneImages.value.map(scene => ({
@@ -136,19 +157,40 @@ const saveScene = () => {
   }
 };
 
-const handleFileImport = () => {
+// 下拉菜单
+const showModelDropdown = ref(false);
+const ToggleModelDropdown = () => {
+  showModelDropdown.value = !showModelDropdown.value;
+}
+// 导入光源
+const ImportLightSource = () => {
+  showModelDropdown.value = false;
+  if (window.pyBridge && window.pyBridge.createLight) {
+    window.pyBridge.createLight(currentSceneName.value);
+  }
+};
+// 导入摄像头
+const ImportCamera = () => {
+  showModelDropdown.value = false;
+  if (window.pyBridge && window.pyBridge.createCamera) {
+    window.pyBridge.createCamera(currentSceneName.value);
+  }
+};
+
+const HandleFileImport = () => { 
+  showModelDropdown.value = false;
   if (window.pyBridge && window.pyBridge.open_file_dialog) {
     window.pyBridge.open_file_dialog(currentSceneName.value, 'model');
   }
 };
 
-const handleSceneImport = () => {
+const HandleSceneImport = () => {
   if (window.pyBridge && window.pyBridge.open_file_dialog) {
     window.pyBridge.open_file_dialog(currentSceneName.value, 'scene');
   }
 };
 
-const handleDockEvent = (event_type, event_data) => {
+const HandleDockEvent = (event_type, event_data) => {
   if (event_type === 'actorCreated') {
     try {
       const data = JSON.parse(event_data);
@@ -179,7 +221,7 @@ const handleDockEvent = (event_type, event_data) => {
   }
 };
 
-const deleteActor = (scene) => {
+const DeleteActor = (scene) => {
   try {
     if (window.pyBridge && window.pyBridge.actor_delete) {
       window.pyBridge.actor_delete(currentSceneName.value,scene.name);
@@ -223,39 +265,39 @@ const DayNightCycle = () => {
 };
 
 //关闭浮动窗口
-const closeFloat = () => {
+const CloseFloat = () => {
   if (window.pyBridge) {
     window.pyBridge.remove_dock_widget("SceneBar");
   }
 };
 
-const handleResizeMove = (e) => {
+const HandleResizeMove = (e) => {
   if (dragState.value.isResizing) onResize(e);
 };
 
-const handleResizeUp = () => {
+const HandleResizeUp = () => {
   if (dragState.value.isResizing) stopResize();
 };
 
 onMounted(() => {
   currentSceneName.value = route.query.sceneName || 'scene1';
-  document.addEventListener('mousemove', handleResizeMove);
-  document.addEventListener('mouseup', handleResizeUp);
+  document.addEventListener('mousemove', HandleResizeMove);
+  document.addEventListener('mouseup', HandleResizeUp);
   document.addEventListener('mousemove', onDrag);
   document.addEventListener('mouseup', stopDrag);
   window.pyBridge.send_message_to_dock("AITalkBar", JSON.stringify({"content": "Hello, World!"}));
   if (window.pyBridge) {
-    window.pyBridge.dock_event.connect(handleDockEvent);
+    window.pyBridge.dock_event.connect(HandleDockEvent);
   };
 });
 
 onUnmounted(() => {
-  document.removeEventListener('mousemove', handleResizeMove);
-  document.removeEventListener('mouseup', handleResizeUp);
+  document.removeEventListener('mousemove', HandleResizeMove);
+  document.removeEventListener('mouseup', HandleResizeUp);
   document.removeEventListener('mousemove', onDrag);
   document.removeEventListener('mouseup', stopDrag);
   if (window.pyBridge) {
-    window.pyBridge.dock_event.disconnect(handleDockEvent);
+    window.pyBridge.dock_event.disconnect(HandleDockEvent);
   };
 });
 </script>
