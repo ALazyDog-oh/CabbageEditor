@@ -2,7 +2,7 @@
   <div class=" border-2 border-[#84a65b] rounded-md relative">
   <div class="titlebar flex items-center w-full p-2 justify-between bg-[#84A65B] cursor-move select-none"
     @mousedown="startDrag" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag" @dblclick="handleDoubleClick">
-    <div class="text-white font-medium w-auto whitespace-nowrap">角色</div>
+    <div class="text-white font-medium w-auto whitespace-nowrap">模型属性</div>
     <div class="flex w-full space-x-2 justify-end">
       <!--导出py代码功能待定-->
       <!-- <button @click="ExportCode"
@@ -16,12 +16,60 @@
     </div>
   </div>
   <div class="w-full bg-[#a8a4a3]/65 flex flex-col" style="height: calc(100vh - 56px);">
-    <div class="flex items-center space-x-2">
-      <label class="text-gray-600">角色</label>
-      <input type="text" placeholder="角色路径"
-        class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" v-model="character" />
+    <div class="p-2 border-b border-gray-400">
+      <div class="flex items-center space-x-2">
+        <label class="text-gray-600">角色</label>
+        <input type="text" placeholder="角色路径"
+          class="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" v-model="character" />
+      </div>
     </div>
 
+    <!-- 标签页切换 -->
+     <div class="flex border-b border-gray-400 bg-[#686868]/70">
+      <button 
+        @click="ActiveTab = 'BlocklyProgram'" 
+        :class="[ActiveTab === 'BlocklyProgram' ? 'bg-gray-700 text-white' : 'bg-[#a8a4a3]/80 hover:bg-gray-600 text-black']" 
+        class="flex-1 px-4 py-2 text-sm hover:bg-[#a8a4a3]/80 transition-colors duration-200">
+        Blockly编程
+      </button>
+      <button 
+        @click="ActiveTab = 'Material'" 
+        :class="[ActiveTab === 'Material' ? 'bg-gray-700 text-white' : 'bg-[#a8a4a3]/80 hover:bg-gray-600 text-black']" 
+        class="flex-1 px-4 py-2 text-sm hover:bg-[#a8a4a3]/80 transition-colors duration-200">
+        材质
+      </button>
+      <button 
+        @click="ActiveTab = 'Params'" 
+        :class="[ActiveTab === 'Params' ? 'bg-gray-700 text-white' : 'bg-[#a8a4a3]/80 hover:bg-gray-600 text-black']" 
+        class="flex-1 px-4 py-2 text-sm hover:bg-[#a8a4a3]/80 transition-colors duration-200">
+        调参
+      </button>
+      <button 
+        @click="ActiveTab = 'Light'" 
+        :class="[ActiveTab === 'Light' ? 'bg-gray-700 text-white' : 'bg-[#a8a4a3]/80 hover:bg-gray-600 text-black']" 
+        class="flex-1 px-4 py-2 text-sm hover:bg-[#a8a4a3]/80 transition-colors duration-200">
+        光照强度
+      </button>
+      <button 
+        @click="ActiveTab = 'Size'" 
+        :class="[ActiveTab === 'Size' ? 'bg-gray-700 text-white' : 'bg-[#a8a4a3]/80 hover:bg-gray-600 text-black']" 
+        class="flex-1 px-4 py-2 text-sm hover:bg-[#a8a4a3]/80 transition-colors duration-200">
+        大小
+      </button>
+     </div>
+
+    <div class="flex-1 overflow-auto">
+      <!-- Blockly编程 Tab -->
+      <div v-show="ActiveTab === 'BlocklyProgram'" class="h-full">
+        <div id="blockdiv" class="blockly-container"></div>
+      </div>
+
+      <!-- 材质Tab -->
+      <div v-show="ActiveTab === 'Material'" class="p-4 text-white">
+        <!-- 功能补充 -->
+      </div>
+
+    <div v-show="ActiveTab === 'Params'" class="p-4 space-y-4">
     <div class="flex items-center justify-between space-x-4 mb-4">
       <label class="text-write whitespace-nowrap">坐标：</label>
       <label class="text-write">x</label>
@@ -69,8 +117,16 @@
         class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
         :value="sz" />
     </div>
-    <div class="flex-1 overflow-y-auto">
-      <div id="blockdiv" class="blockly-container"></div>
+    </div>
+
+    <!-- 光照强度Tab -->
+    <div v-show="ActiveTab === 'Light'" class="p-4 text-white">
+      <!-- 功能补充 -->
+    </div>
+    <!-- 大小Tab -->
+    <div v-show="ActiveTab === 'Size'" class="p-4 text-white">
+      <!-- 功能补充 -->
+    </div>
     </div>
   </div>
 
@@ -124,6 +180,7 @@ const character = ref('');
 const px=ref('0.0'), py=ref('0.0'), pz=ref('0.0');
 const rx=ref('0.0'), ry=ref('0.0'), rz=ref('0.0');
 const sx=ref('1.0'), sy=ref('1.0'), sz=ref('1.0');
+const ActiveTab = ref('BlocklyProgram');
 
 const route = useRoute();
 const scenename = ref(null);
