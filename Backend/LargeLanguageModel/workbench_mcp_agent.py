@@ -47,19 +47,19 @@ class WorkbenchAgent(RoutedAgent):
 
     @message_handler
     async def handle_user_message(self, message: Message, ctx: MessageContext) -> Message:
-        # Add the user message to the model context.
+                                                    
         await self._model_context.add_message(UserMessage(content=message.content, source="user"))
         print("---------User Message-----------")
         print(message.content)
 
-        # Run the chat completion with the tools.
+                                                 
         create_result = await self._model_client.create(
             messages=self._system_messages + (await self._model_context.get_messages()),
             tools=(await self._workbench.list_tools()),
             cancellation_token=ctx.cancellation_token,
         )
 
-        # Run tool call loop.
+                             
         while isinstance(create_result.content, list) and all(
             isinstance(call, FunctionCall) for call in create_result.content
         ):
@@ -67,10 +67,10 @@ class WorkbenchAgent(RoutedAgent):
             for call in create_result.content:
                 print(call)
 
-            # Add the function calls to the model context.
+                                                          
             await self._model_context.add_message(AssistantMessage(content=create_result.content, source="assistant"))
 
-            # Call the tools using the workbench.
+                                                 
             print("---------Function Call Results-----------")
             results: List[ToolResult] = []
             for call in create_result.content:
@@ -80,7 +80,7 @@ class WorkbenchAgent(RoutedAgent):
                 results.append(result)
                 print(result)
 
-            # Add the function execution results to the model context.
+                                                                      
             await self._model_context.add_message(
                 FunctionExecutionResultMessage(
                     content=[
@@ -95,23 +95,23 @@ class WorkbenchAgent(RoutedAgent):
                 )
             )
 
-            # Run the chat completion again to reflect on the history and function execution results.
+                                                                                                     
             create_result = await self._model_client.create(
                 messages=self._system_messages + (await self._model_context.get_messages()),
                 tools=(await self._workbench.list_tools()),
                 cancellation_token=ctx.cancellation_token,
             )
 
-        # Now we have a single message as the result.
+                                                     
         assert isinstance(create_result.content, str)
 
         print("---------Final Response-----------")
         print(create_result.content)
 
-        # Add the assistant message to the model context.
+                                                         
         await self._model_context.add_message(AssistantMessage(content=create_result.content, source="assistant"))
 
-        # Return the result as a message.
+                                         
         return Message(content=create_result.content)
 
 
@@ -124,17 +124,17 @@ class AiAgent(RoutedAgent):
 
     @message_handler
     async def handle_code_writing_task(self, message: Message, ctx: MessageContext) -> None:
-        # print(f"{self.id.type} received message: {message.content}")
+                                                                      
         response = await self._delegate.on_messages(
             [TextMessage(content=message.content, source="user")], ctx.cancellation_token
         )
         print(f"{response.chat_message.content}")
 
 
-# Define an asynchronous main function to encapsulate the async operations
+                                                                          
 async def main_wrapper_async():
     global runtime
-    # 初始化模型客户端等
+               
     model_client = OpenAIChatCompletionClient(
         model="deepseek-chat",
         base_url="https://api.deepseek.com/v1",
@@ -156,9 +156,9 @@ async def main_wrapper_async():
 
     content = "帮我在blender中建个猴头"
 
-    # 使用真实 subprocess 命令，避免假 command
+                                    
     blender_server_command = StdioServerParams(
-        mode="stdio",  # 该模式默认创建 subprocess 并通过 stdio 通信
+        mode="stdio",                                   
         command="blender-mcp",
         args=["--host", "127.0.0.1", "--port", "9876"]
     )
@@ -180,7 +180,7 @@ async def main_wrapper_async():
             recipient=AgentId("BlenderAgent", "default"),
         )
 
-    # MCP退出后，立刻关闭runtime，确保资源全部释放
+                                 
     await runtime.stop()
 
 
@@ -194,7 +194,7 @@ def main_wrapper():
         print(f"运行出错：{e}")
     finally:
         try:
-            # 先强制取消所有挂起任务，避免 loop.close 后有 transport 抛错
+                                                       
             pending = asyncio.all_tasks(loop)
             for task in pending:
                 task.cancel()
@@ -204,12 +204,12 @@ def main_wrapper():
         loop.close()
 
 
-runtime = None  # 全局变量
-# Run the main asynchronous function
+runtime = None        
+                                    
 if __name__ == "__main__":
-    # #启动异步程序，它内部已经自动管理事件循环关闭。
-    # 当事件循环（event loop）关闭时，Transport 对象还没完全关闭或释放。
-    # 在 Transport.__del__（析构函数）执行时，它尝试调度异步事件，但此时事件循环已经关闭，导致了 RuntimeError: Event loop is closed。
-    # Transport 是 asyncio 底层用来管理“数据传输通道”的抽象接口，就是负责异步 I/O 操作的“管道”或“连接”。
-    # asyncio.run(main()) 
+                              
+                                                 
+                                                                                                
+                                                                      
+                          
     main_wrapper()

@@ -18,7 +18,7 @@ class MCPClient:
         )
 
     async def connect_to_server(self, server_name):
-        # 拉起对应的 mcp server 进程
+                             
         server_params = StdioServerParameters(
             command='python',
             args=[f'{server_name}.py'],
@@ -34,8 +34,8 @@ class MCPClient:
         await self.session.initialize()
 
     async def process_query(self, query: str) -> str:
-        # 这里需要通过 system prompt 来约束一下大语言模型，
-        # 否则会出现不调用工具，自己乱回答的情况
+                                          
+                             
         system_prompt = (
             "You are a helpful assistant."
             "You have the function of online search. "
@@ -51,9 +51,9 @@ class MCPClient:
             {"role": "user", "content": query}
         ]
 
-        # 获取所有 mcp 服务器 工具列表信息
+                             
         response = await self.session.list_tools()
-        # 生成 function call 的描述信息
+                                
         available_tools = [{
             "type": "function",
             "function": {
@@ -63,26 +63,26 @@ class MCPClient:
             }
         } for tool in response.tools]
 
-        # 请求 deepseek，function call 的描述信息通过 tools 参数传入
+                                                      
         response = self.client.chat.completions.create(
             model="Qwen/Qwen2.5-7B-Instruct",
             messages=messages,
             tools=available_tools
         )
 
-        # 处理返回的内容
+                 
         content = response.choices[0]
         if content.finish_reason == "tool_calls":
-            # 如何是需要使用工具，就解析工具
+                             
             tool_call = content.message.tool_calls[0]
             tool_name = tool_call.function.name
             tool_args = json.loads(tool_call.function.arguments)
 
-            # 执行工具
+                  
             result = await self.session.call_tool(tool_name, tool_args)
             print(f"\n\n[Calling tool {tool_name} with args {tool_args}]\n\n")
-			
-            # 将 deepseek 返回的调用哪个工具数据和工具执行完成后的数据都存入messages中
+   
+                                                           
             messages.append(content.message.model_dump())
             messages.append({
                 "role": "tool",
@@ -90,7 +90,7 @@ class MCPClient:
                 "tool_call_id": tool_call.id,
             })
 
-            # 将上面的结果再返回给 deepseek 用于生产最终的结果
+                                           
             response = self.client.chat.completions.create(
                 model="Qwen/Qwen2.5-7B-Instruct",
                 messages=messages,
