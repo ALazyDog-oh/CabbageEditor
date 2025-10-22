@@ -4,11 +4,11 @@
     @mousedown="startDrag" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag" @dblclick="handleDoubleClick">
     <div class="text-white font-medium w-auto whitespace-nowrap">角色</div>
     <div class="flex w-full space-x-2 justify-end">
-      <button @click="exportCode"
+      <button @click="ExportCode"
         class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded transition-colors duration-200">
         导出
       </button>
-      <button @click.stop="closeFloat"
+      <button @click.stop="CloseFloat"
         class="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors duration-200">
         ×
       </button>
@@ -25,15 +25,15 @@
     <div class="flex items-center justify-between space-x-4 mb-4">
       <label class="text-write whitespace-nowrap">坐标：</label>
       <label class="text-write">x</label>
-      <input type="number" step="0.1" @change="updatePosition" @input="e => px = e.target.value"
+      <input type="number" step="0.1" @change="UpdatePosition" @input="e => px = e.target.value"
         class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
         :value="px" />
       <label class="text-write">y</label>
-      <input type="number" step="0.1" @change="updatePosition" @input="e => py = e.target.value"
+      <input type="number" step="0.1" @change="UpdatePosition" @input="e => py = e.target.value"
         class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
         :value="py" />
       <label class="text-write">z</label>
-      <input type="number" step="0.1" @change="updatePosition" @input="e => pz = e.target.value"
+      <input type="number" step="0.1" @change="UpdatePosition" @input="e => pz = e.target.value"
         class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
         :value="pz" />
     </div>
@@ -41,15 +41,15 @@
     <div class="flex items-center justify-between space-x-4 mb-4">
       <label class="text-write whitespace-nowrap">旋转：</label>
       <label class="text-write">x</label>
-      <input type="number" step="0.1" @change="updateRotation" @input="e => rx = e.target.value"
+      <input type="number" step="0.1" @change="UpdateRotation" @input="e => rx = e.target.value"
         class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
         :value="rx" />
       <label class="text-write">y</label>
-      <input type="number" step="0.1" @change="updateRotation" @input="e => ry = e.target.value"
+      <input type="number" step="0.1" @change="UpdateRotation" @input="e => ry = e.target.value"
         class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
         :value="ry" />
       <label class="text-write">z</label>
-      <input type="number" step="0.1" @change="updateRotation" @input="e => rz = e.target.value"
+      <input type="number" step="0.1" @change="UpdateRotation" @input="e => rz = e.target.value"
         class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
         :value="rz" />
     </div>
@@ -57,15 +57,15 @@
     <div class="flex items-center justify-between space-x-4 mb-4">
       <label class="text-write whitespace-nowrap">缩放：</label>
       <label class="text-write">x</label>
-      <input type="number" step="0.1" @change="updateScale" @input="e => sx = e.target.value"
+      <input type="number" step="0.1" @change="UpdateScale" @input="e => sx = e.target.value"
         class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
         :value="sx" />
       <label class="text-write">y</label>
-      <input type="number" step="0.1" @change="updateScale" @input="e => sy = e.target.value"
+      <input type="number" step="0.1" @change="UpdateScale" @input="e => sy = e.target.value"
         class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
         :value="sy" />
       <label class="text-write">z</label>
-      <input type="number" step="0.1" @change="updateScale" @input="e => sz = e.target.value"
+      <input type="number" step="0.1" @change="UpdateScale" @input="e => sz = e.target.value"
         class="w-20 p-1 text-center border rounded-md focus:outline-none focus:ring-2 text-write focus:ring-blue-400 bg-[#686868]/70"
         :value="sz" />
       </div>
@@ -74,7 +74,7 @@
       <div id="blockdiv" class="blockly-container"></div>
     </div>
     <div class="fixed bottom-4 right-4 flex bg-gray-700/80 rounded-full shadow-lg">
-        <button @click="prevPage" :disabled="currentPage === 1"
+        <button @click="PrevPage" :disabled="currentPage === 1"
           class="px-3 py-1 text-white hover:bg-gray-600/80 transition-colors duration-200 rounded-l-full disabled:opacity-50 flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -83,7 +83,7 @@
         <div class="px-2 py-1 text-white text-sm flex items-center">
           {{ currentPage }}/2
         </div>
-        <button @click="nextPage" :disabled="currentPage === 2"
+        <button @click="NextPage" :disabled="currentPage === 2"
           class="px-3 py-1 text-white hover:bg-gray-600/80 transition-colors duration-200 rounded-r-full disabled:opacity-50 flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -112,7 +112,7 @@
       <pre class="bg-gray-100 p-4 rounded-md overflow-auto max-h-96">{{ exportedCode }}</pre>
       <div class="mt-4 flex justify-end space-x-2">
         <button 
-          @click="copyToClipboard"
+          @click="CopyToClipboard"
           class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
         >
           复制代码
@@ -412,7 +412,7 @@ const handleBlockCreate = (event) => {
   }
 };
 
-const updatePosition = () => {
+const UpdatePosition = () => {
   if (window.pyBridge) {
     window.pyBridge.actor_operation(JSON.stringify({
       Operation: "Move",
@@ -426,7 +426,7 @@ const updatePosition = () => {
   }
 }
 
-const updateRotation = () => {
+const UpdateRotation = () => {
   if (window.pyBridge) {
     window.pyBridge.actor_operation(JSON.stringify({
       Operation: "Rotate",
@@ -440,7 +440,7 @@ const updateRotation = () => {
   }
 }
 
-const updateScale = () => {
+const UpdateScale = () => {
   if (window.pyBridge) {
     window.pyBridge.actor_operation(JSON.stringify({
       Operation: "Scale",
@@ -454,7 +454,7 @@ const updateScale = () => {
   }
 }
 
-const closeFloat = () => {
+const CloseFloat = () => {
   if (window.pyBridge) {
     window.pyBridge.remove_dock_widget(routename.value);
   }
@@ -468,7 +468,7 @@ const handleResizeUp = () => {
   if (dragState.value.isResizing) stopResize();
 };
 
-const exportCode = () => {
+const ExportCode = () => {
   try {
     const code = pythonGenerator.workspaceToCode(workspace.value);
     if (!code) {
@@ -483,7 +483,7 @@ const exportCode = () => {
   }
 };
 
-const copyToClipboard = async () => {
+const CopyToClipboard = async () => {
   try {
     await navigator.clipboard.writeText(exportedCode.value);
     alert('代码已复制');
@@ -494,12 +494,12 @@ const copyToClipboard = async () => {
 };
 // 分页相关代码
 const currentPage = ref(1);
-const prevPage = () => {
+const PrevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--;
   }
 };
-const nextPage = () => {
+const NextPage = () => {
   if (currentPage.value < 2) {
     currentPage.value++;
   }
