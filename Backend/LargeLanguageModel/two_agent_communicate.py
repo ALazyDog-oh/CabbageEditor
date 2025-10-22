@@ -9,7 +9,7 @@ from autogen_core.models import ChatCompletionClient, LLMMessage, SystemMessage,
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.tools.mcp import StdioServerParams, mcp_server_tools
 
-# 忽略 asyncio 中 Proactor 下的关闭管道报错
+                                
 _original_del_proactor = asyncio.proactor_events._ProactorBasePipeTransport.__del__
 _original_del_subprocess = asyncio.base_subprocess.BaseSubprocessTransport.__del__
 
@@ -45,7 +45,7 @@ model_client = OpenAIChatCompletionClient(
 class Messages:
     task: str
 
-@default_subscription   #默认订阅default，接收所有default发的信息
+@default_subscription                               
 class TaskPlanner(RoutedAgent):
     """一个专业的三维任务扩充专家"""
 
@@ -70,14 +70,14 @@ class TaskPlanner(RoutedAgent):
                     一个放在桌子上的咖啡杯
                     输出：
                     请在 Blender 中创建一个咖啡杯，颜色为蓝色，尺寸为 0.5 米 x 0.5 米 x 0.5 米，放置在尺寸为1.2m×0.7m×0.75m（长×宽×高）的矩形桌子，材质为深棕色木质纹理桌子上。
-            """,# +BaseKonwledge
+            """,                
             )
         ]
         self._model_client = model_client
        
     @message_handler
     async def handle_code_plan_task(self, message: Messages, ctx: MessageContext) -> None:
-        # Generate a response using the chat completion API.
+                                                            
         response = await self._model_client.create(
             self._system_messages + [UserMessage(content=message.task, source=self.metadata["type"])],
             cancellation_token=ctx.cancellation_token,
@@ -86,7 +86,7 @@ class TaskPlanner(RoutedAgent):
         publish_messages = Messages(task=response.content)
         await self.publish_message(publish_messages, topic_id="default")
 
-@default_subscription   #默认订阅default，接收所有default发的信息
+@default_subscription                               
 class BlenderAgent(RoutedAgent):
     """You are a helpful assistant. You can use various tools via MCP."""
 
@@ -96,7 +96,7 @@ class BlenderAgent(RoutedAgent):
             SystemMessage(
                 content="""
                     You are a helpful assistant. You can use various tools via MCP.
-                 """,# +BaseKonwledge
+                 """,                
             )]
         self._model_client = model_client
         self._tools = tools
@@ -105,7 +105,7 @@ class BlenderAgent(RoutedAgent):
        
     @message_handler
     async def handle_code_plan_task(self, message: Messages, ctx: MessageContext) -> None:
-        # Generate a response using the chat completion API.
+                                                            
         response = await self._model_client.create(
             self._system_messages + [UserMessage(content=message.task, source=self.metadata["type"])],
             tools=self._tools,
@@ -122,11 +122,11 @@ async def main() -> None:
     server_params = StdioServerParams(
         command="cmd", args=["/c", "uvx", "blender-mcp", desktop]
     )
-    # 需要安装 uv 工具：https://github.com/astral-sh/uv
-    # 封装从MCP Server得到的Tools
+                                                
+                           
     tools = await mcp_server_tools(server_params)
     print("tools: ",tools)
-    # await TaskPlanner.register(runtime, "TaskPlanner", lambda: TaskPlanner(model_client=model_client))
+                                                                                                        
     await BlenderAgent.register(runtime, "BlenderAgent", lambda: BlenderAgent(model_client=model_client, tools=tools))
     
     runtime.start()
@@ -135,7 +135,7 @@ async def main() -> None:
         topic_id=DefaultTopicId(),
     )
 
-    # Keep processing messages until idle.
+                                          
     await runtime.stop_when_idle()
 
 if __name__ == "__main__":
@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
     try:
         loop.run_until_complete(main())
-        # 等待后台任务关闭（如 transport 等）
+                                 
         loop.run_until_complete(asyncio.sleep(0.1))
     finally:
         loop.run_until_complete(loop.shutdown_asyncgens())

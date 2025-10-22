@@ -53,7 +53,7 @@ class MainWindow(QMainWindow):
         super().moveEvent(event)
 
     def reloadWidget(self) -> None:
-        # 保持渲染窗口为主窗口中心部件，仅重建 OSD 的 browser_widget
+                                                 
         for dock in self.findChildren(QDockWidget):
             dock.setParent(None)
 
@@ -63,7 +63,7 @@ class MainWindow(QMainWindow):
 
         if self.browser_widget:
             self.browser_widget.setParent(None)
-        # 重新创建并挂载到 OSD 窗口
+                         
         self.browser_widget = BrowserWidget(self.osd, url)
         self.osd.setCentralWidget(self.browser_widget)
 
@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
         profile = QWebEngineProfile.defaultProfile()
         settings = profile.settings()
         settings.setAttribute(QWebEngineSettings.WebAttribute.ShowScrollBars, False)
-        # Reduce cache/cookies persistence to mitigate memory accumulation
+                                                                          
         try:
             profile.setHttpCacheType(QWebEngineProfile.HttpCacheType.MemoryHttpCache)
             profile.setHttpCacheMaximumSize(0)

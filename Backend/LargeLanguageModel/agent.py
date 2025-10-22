@@ -13,7 +13,7 @@ from autogen_core.tool_agent import ToolAgent
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.tools.mcp import StdioServerParams, mcp_server_tools
 
-# 忽略 asyncio 中 Proactor 下的关闭管道报错
+                                
 _original_del_proactor = asyncio.proactor_events._ProactorBasePipeTransport.__del__
 _original_del_subprocess = asyncio.base_subprocess.BaseSubprocessTransport.__del__
 
@@ -40,7 +40,7 @@ class CodeReviewResult:
     session_id: str
     approved: bool
 
-@default_subscription   #默认订阅default，接收所有default发的信息
+@default_subscription                               
 class CodeGenerator(RoutedAgent):
     """An agent that performs code writing tasks."""
 
@@ -66,51 +66,51 @@ class CodeGenerator(RoutedAgent):
         ]
         self._model_client = model_client
         self._session_memory: Dict[str, List[CodeWritingTask | CodeReviewTask | CodeReviewResult]] = {}   
-        #_session_memory的格式是字典，是键值必须是字符串，值是一个列表，列表中的元素可以是三种类型之一
+                                                               
     @message_handler
     async def handle_code_writing_task(self, message: CodeWritingTask, ctx: MessageContext) -> None:
-        # Store the messages in a temporary memory for this request only.
+                                                                         
         session_id = str(uuid.uuid4())
-        self._session_memory.setdefault(session_id, []).append(message)   #存储对应的session的message
-        # Generate a response using the chat completion API.
+        self._session_memory.setdefault(session_id, []).append(message)                        
+                                                            
         response = await self._model_client.create(
             self._system_messages + [UserMessage(content=message.task, source=self.metadata["type"])],
             cancellation_token=ctx.cancellation_token,
         )
         assert isinstance(response.content, str)
-        # Extract the code block from the response.
+                                                   
         code_block = self._extract_code_block(response.content)
         if code_block is None:
             raise ValueError("Code block not found.")
-        # Create a code review task.
+                                    
         code_review_task = CodeReviewTask(
             session_id=session_id,
             code_writing_task=message.task,
             code_writing_scratchpad=response.content,
             code=code_block,
         )
-        # Store the code review task in the session memory.
+                                                           
         self._session_memory[session_id].append(code_review_task)
-        # Publish a code review task.
+                                     
         await self.publish_message(code_review_task, topic_id=TopicId("default", self.id.key))
 
     @message_handler
     async def handle_code_review_result(self, message: CodeReviewResult, ctx: MessageContext) -> None:
-        # Store the review result in the session memory.
+                                                        
         self._session_memory[message.session_id].append(message)
-        # Obtain the request from previous messages.
-        #  反向遍历列表查找最近的 CodeReviewTask，确保当前审查结果是对应最新的代码版本，而非历史上的某次旧版本。
+                                                    
+                                                                     
         review_request = next(
             m for m in reversed(self._session_memory[message.session_id]) if isinstance(m, CodeReviewTask)
         )
         assert review_request is not None
-        # Check if the code is approved.如果这次的reviewresult中的approved是true,则提取最新的代码
+                                                                                 
         if message.approved:
 
-            # 使用 json.dumps 对 code 进行转义
+                                       
             escaped_code = json.dumps(review_request.code)
 
-            # Publish the code writing result.
+                                              
             await self.publish_message(
                 FunctionCall(
                     id=message.session_id,
@@ -128,9 +128,9 @@ class CodeGenerator(RoutedAgent):
             print("-" * 80)
             print(f"Review:\n{message.review}")
             print("-" * 80)
-        else:  #否则（approved是False），就要再次重写代码，再去审查
-            # Create a list of LLM messages to send to the model.
-            messages: List[LLMMessage] = [*self._system_messages]  # 解包后重新构造新列表
+        else:                                   
+                                                                 
+            messages: List[LLMMessage] = [*self._system_messages]              
             for m in self._session_memory[message.session_id]:
                 if isinstance(m, CodeReviewResult):
                     messages.append(UserMessage(content=m.review, source="Reviewer"))
@@ -140,30 +140,30 @@ class CodeGenerator(RoutedAgent):
                     messages.append(UserMessage(content=m.task, source="User"))
                 else:
                     raise ValueError(f"Unexpected message type: {m}")
-            # Generate a revision using the chat completion API.
+                                                                
             response = await self._model_client.create(messages, cancellation_token=ctx.cancellation_token)
             assert isinstance(response.content, str)
-            # Extract the code block from the response.
+                                                       
             code_block = self._extract_code_block(response.content)
             if code_block is None:
                 raise ValueError("Code block not found.")
-            # Create a new code review task.
+                                            
             code_review_task = CodeReviewTask(
                 session_id=message.session_id,
                 code_writing_task=review_request.code_writing_task,
                 code_writing_scratchpad=response.content,
                 code=code_block,
             )
-            # Store the code review task in the session memory.
+                                                               
             self._session_memory[message.session_id].append(code_review_task)
-            # Publish a new code review task.
+                                             
             await self.publish_message(code_review_task, topic_id=TopicId("default", self.id.key))
 
     def _extract_code_block(self, markdown_text: str) -> Union[str, None]:
         pattern = r"```(\w+)\n(.*?)\n```"
-        # Search for the pattern in the markdown text
+                                                     
         match = re.search(pattern, markdown_text, re.DOTALL)
-        # Extract the language and code block if a match is found
+                                                                 
         if match:
             return match.group(2)
         return None
@@ -192,8 +192,8 @@ class CodeReviewer(RoutedAgent):
 
     @message_handler
     async def handle_code_review_task(self, message: CodeReviewTask, ctx: MessageContext) -> None:
-        # Format the prompt for the code review.
-        # Gather the previous feedback if available.
+                                                
+                                                    
         previous_feedback = ""
         if message.session_id in self._session_memory:
             previous_review = next(
@@ -202,7 +202,7 @@ class CodeReviewer(RoutedAgent):
             )
             if previous_review is not None:
                 previous_feedback = previous_review.review
-        # Store the messages in a temporary memory for this request only.
+                                                                         
         self._session_memory.setdefault(message.session_id, []).append(message)
         prompt = f"""The problem statement is: {message.code_writing_task}
                     The code is:
@@ -215,17 +215,17 @@ class CodeReviewer(RoutedAgent):
 
                     Please review the code. If previous feedback was provided, see if it was addressed.
                     """
-        # Generate a response using the chat completion API.
+                                                            
         response = await self._model_client.create(
             self._system_messages + [UserMessage(content=prompt, source=self.metadata["type"])],
             cancellation_token=ctx.cancellation_token,
             json_output=True,
         )
         assert isinstance(response.content, str)
-        # TODO: use structured generation library e.g. guidance to ensure the response is in the expected format.
-        # Parse the response JSON.
+                                                                                                                 
+                                  
         review = json.loads(response.content)
-        # Construct the review text.
+                                    
         review_text = "Code review:\n" + "\n".join([f"{k}: {v}" for k, v in review.items()])
         approved = review["approval"].lower().strip() == "approve"
         result = CodeReviewResult(
@@ -233,12 +233,12 @@ class CodeReviewer(RoutedAgent):
             session_id=message.session_id,
             approved=approved,
         )
-        # Store the review result in the session memory.
+                                                        
         self._session_memory[message.session_id].append(result)
-        # Publish the review result.
+                                    
         await self.publish_message(result, topic_id=TopicId("default", self.id.key))
 
-@default_subscription   #默认订阅default，接收所有default发的信息
+@default_subscription                               
 class Blender_excute_Agent(ToolAgent):
     """You are a helpful assistant. You can use various tools via MCP."""
 
@@ -266,8 +266,8 @@ async def main():
     server_params = StdioServerParams(
         command="cmd", args=["/c", "uvx", "blender-mcp", desktop]
     )
-    # 需要安装 uv 工具：https://github.com/astral-sh/uv
-    # 封装从MCP Server得到的Tools
+                                                
+                           
     tools = await mcp_server_tools(server_params)
     await Blender_excute_Agent.register(runtime, "Blender_excute_Agent", lambda: Blender_excute_Agent(tools))
 
@@ -277,10 +277,10 @@ async def main():
         topic_id=DefaultTopicId(),
     )
 
-    # Keep processing messages until idle.
+                                          
     await runtime.stop_when_idle()
     await asyncio.sleep(3)
-    # 清理事件循环
+            
     loop.stop()
 
 if __name__ == "__main__":
@@ -289,8 +289,8 @@ if __name__ == "__main__":
 
     try:
         loop.run_until_complete(main())
-        # 等待后台任务关闭（如 transport 等）
+                                 
         loop.run_until_complete(asyncio.sleep(0.1))
     finally:
-        loop.run_until_complete(loop.shutdown_asyncgens())  # 确保清理所有异步生成器
+        loop.run_until_complete(loop.shutdown_asyncgens())               
         loop.close()

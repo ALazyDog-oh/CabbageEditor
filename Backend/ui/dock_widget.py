@@ -46,18 +46,18 @@ class RouteDockWidget(QDockWidget):
         self.browser.setStyleSheet("background: transparent;")
         self.browser.page().setBackgroundColor(QColor(Qt.GlobalColor.transparent))
         self.browser.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
-        # Create off-the-record profile for this dock to isolate memory/cache
+                                                                             
         try:
             self.profile = QWebEngineProfile(self)
-            # use ephemeral storage and no cache to minimize accumulation
+                                                                         
             try:
-                # set off the record if available
+                                                 
                 if hasattr(self.profile, "setOffTheRecord"):
                     self.profile.setOffTheRecord(True)
                 self.profile.setHttpCacheType(QWebEngineProfile.HttpCacheType.MemoryHttpCache)
                 self.profile.setHttpCacheMaximumSize(0)
                 self.profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.NoPersistentCookies)
-                # Hide native scrollbars at engine level
+                                                        
                 try:
                     settings = self.profile.settings()
                     settings.setAttribute(QWebEngineSettings.WebAttribute.ShowScrollBars, False)
@@ -67,7 +67,7 @@ class RouteDockWidget(QDockWidget):
                 pass
             page = QWebEnginePage(self.profile, self.browser)
             self.browser.setPage(page)
-            # Ensure transparent background on the custom page
+                                                              
             try:
                 page.setBackgroundColor(QColor(Qt.GlobalColor.transparent))
             except Exception:
@@ -75,7 +75,7 @@ class RouteDockWidget(QDockWidget):
         except Exception:
             self.profile = None
         self.browser.load(self.url)
-        # 向页面注入当前 dock 的 routename，供前端事件携带
+                                          
         try:
             self.browser.loadFinished.connect(lambda ok, name=self.name: self.browser.page().runJavaScript(
                 f"window.__dockRouteName = {json.dumps(name)};"))
@@ -106,7 +106,7 @@ class RouteDockWidget(QDockWidget):
         self.channel = QWebChannel()
         self.bridge = get_bridge(self.centralmanager)
         self.channel.registerObject("pybridge", self.bridge)
-        # Set on the current page (may be a custom page)
+                                                        
         try:
             self.browser.page().setWebChannel(self.channel)
         except Exception:
@@ -120,7 +120,7 @@ class RouteDockWidget(QDockWidget):
         self.destroyed.connect(self.cleanup_resources)
 
     def dock_event(self, event_type: str, event_data: str) -> None:
-        # 仅处理发给当前 dock 的事件（通过 routename 过滤）
+                                           
         target_ok = True
         try:
             data_obj = json.loads(event_data) if isinstance(event_data, str) else (event_data or {})
@@ -128,7 +128,7 @@ class RouteDockWidget(QDockWidget):
             if target is not None and target != self.name:
                 return
         except Exception:
-            # 解析失败则保守忽略（避免误操作所有 dock）
+                                     
             return
 
         if event_type == "drag" and self.isFloating():
@@ -201,7 +201,7 @@ class RouteDockWidget(QDockWidget):
 
     def cleanup_resources(self) -> None:
         try:
-            # Disconnect from bridge signals to avoid sending to dead dock
+                                                                          
             try:
                 self.bridge.ai_response.disconnect(self.send_ai_message_to_js)
             except Exception:
@@ -210,7 +210,7 @@ class RouteDockWidget(QDockWidget):
                 self.bridge.dock_event.disconnect(self.dock_event)
             except Exception:
                 pass
-            # Unregister and release webchannel resources
+                                                         
             try:
                 if hasattr(self, "channel") and self.channel:
                     self.channel.deregisterObject(self.bridge)
@@ -223,12 +223,12 @@ class RouteDockWidget(QDockWidget):
                 pass
             if hasattr(self, "channel") and self.channel:
                 self.channel.deleteLater()
-            # Remove from central manager safely
+                                                
             try:
                 self.centralmanager.delete_dock(self.name)
             except Exception:
                 pass
-            # Clear and delete profile to free Chromium resources
+                                                                 
             try:
                 if getattr(self, "profile", None) is not None:
                     try:
@@ -239,7 +239,7 @@ class RouteDockWidget(QDockWidget):
                     self.profile = None
             except Exception:
                 pass
-            # Schedule browser deletion
+                                       
             if hasattr(self, "browser"):
                 self.browser.deleteLater()
                 print(f"清理浏览器资源: {self.name}")

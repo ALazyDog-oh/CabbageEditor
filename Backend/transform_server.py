@@ -4,16 +4,16 @@ import json
 import asyncio
 from contextlib import asynccontextmanager
 from typing import Dict, Any, AsyncIterator
-# from QtWindow import Bridge, scene_dict
+                                         
 from utils.bridge import Bridge
-# print(QtWindow.__file__)
-# print(dir(QtWindow))
+                          
+                      
 
-# Setup logging
+               
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("TransformMCPServer")
 
-# Create shared bridge instance
+                               
 qt_bridge = Bridge()
 
 
@@ -25,10 +25,10 @@ async def server_lifespan(server: FastMCP) -> AsyncIterator[Dict[str, Any]]:
     finally:
         logger.info("TransformMCP server shut down")
 
-# MCP app
+         
 app = FastMCP(
     "TransformMCP",
-    # description="Transform server calling Qt actor operations",
+                                                                 
     lifespan=server_lifespan,
 )
 
@@ -74,7 +74,7 @@ async def list_actors(scene_name: str) -> str:
         scene_name: Name of the scene
     """
     try:
-        # 角色名称缓存列表（用于 get_actor_list 工具）
+                                        
         actor_list = []
         if scene_name in QtWindow.scene_dict:
             actor_dict = QtWindow.scene_dict[scene_name]['actor_dict']

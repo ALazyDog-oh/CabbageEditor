@@ -14,7 +14,7 @@ class BrowserWidget(QWebEngineView):
         super(BrowserWidget, self).__init__(Main_Window)
         self.Main_Window = Main_Window
         self.central_manager = CentralManager()
-        # normalize to QUrl
+                           
         self.url = QUrl(url) if isinstance(url, str) else url
 
         self.setMinimumSize(1, 1)
@@ -45,7 +45,7 @@ class BrowserWidget(QWebEngineView):
             return
         browser = QWebEngineView()
         browser.is_main_browser = False
-        dock_area, isFloat, pos = self.get_dock_area(position, floatposition)
+        dock_area, isFloat, pos = self.get_dock_area(position, floatposition, size)
 
         if self.central_manager.docks.get(routename):
             self.RemoveDockWidget(routename)
@@ -53,8 +53,6 @@ class BrowserWidget(QWebEngineView):
             return
         try:
             dock = RouteDockWidget(browser, routename, routepath, self.central_manager, self.Main_Window, isFloat)
-            # With a global singleton bridge, main connections are already set in connect_signals.
-            # Avoid duplicating connections here to prevent multiple slot invocations.
             if isFloat:
                 if size:
                     dock.resize(size.get("width"),size.get("height"))
@@ -76,7 +74,7 @@ class BrowserWidget(QWebEngineView):
             self.Main_Window.removeDockWidget(dock)
             DockCleanupWidget(browser, routename, self.central_manager)
 
-    def get_dock_area(self, position, floatposition):
+    def get_dock_area(self, position, floatposition, size):
         position_map = {
             "left": (Qt.DockWidgetArea.LeftDockWidgetArea, False, None),
             "right": (Qt.DockWidgetArea.RightDockWidgetArea, False, None),
@@ -91,7 +89,12 @@ class BrowserWidget(QWebEngineView):
                 "bottom_left": (Qt.DockWidgetArea.AllDockWidgetAreas, True, screen.geometry().bottomLeft()-QPoint(0,200)),
                 "top_right": (Qt.DockWidgetArea.AllDockWidgetAreas, True, screen.geometry().topRight()-QPoint(150,0)),
                 "bottom_right": (Qt.DockWidgetArea.AllDockWidgetAreas, True, screen.geometry().bottomRight()-QPoint(150,200)),
-                "center": (Qt.DockWidgetArea.AllDockWidgetAreas, True, screen.geometry().center()),
+                "center": (
+                    Qt.DockWidgetArea.AllDockWidgetAreas,
+                    True,
+                    screen.geometry().center() - QPoint(int((size or {}).get("width", 600)) // 2,
+                                                       int((size or {}).get("height", 320)) // 2),
+                ),
             }
             return float_position_map.get(floatposition.lower(), (Qt.DockWidgetArea.AllDockWidgetAreas, True, screen.geometry().topLeft()))
 
@@ -105,20 +108,16 @@ class BrowserWidget(QWebEngineView):
             return
 
         if command_name == "input_event":
-            # Swallow input_event logs: parse silently, no prints
             try:
                 _ = json.loads(command_data) if isinstance(command_data, str) else command_data
             except Exception:
                 pass
             return
-
-        # Fallback: retain minimal logging for unknown commands if needed
-        # print(f"[bridge] Unknown command: {command_name} data={command_data}")
         return
 
     def closeEvent(self, event):
         try:
-            # Disconnect signals to this BrowserWidget (auto-disconnect happens on QObject dtor, but we ensure it)
+                                                                                                                  
             try:
                 self.bridge.create_route.disconnect(self.AddDockWidget)
             except Exception:
@@ -131,7 +130,7 @@ class BrowserWidget(QWebEngineView):
                 self.bridge.command_to_main.disconnect(self.handle_command_to_main)
             except Exception:
                 pass
-            # Unhook WebChannel and deregister object
+                                                     
             try:
                 if hasattr(self, "channel") and self.channel:
                     self.channel.deregisterObject(self.bridge)
@@ -142,7 +141,7 @@ class BrowserWidget(QWebEngineView):
                     self.page().setWebChannel(None)
             except Exception:
                 pass
-            # Delete channel later to free resources
+                                                    
             if hasattr(self, "channel") and self.channel:
                 self.channel.deleteLater()
         finally:
